@@ -43,7 +43,7 @@ from videotrans.ui.minimax import Ui_minimaxform
 from videotrans.ui.openairecognapi import Ui_openairecognapiform
 from videotrans.ui.openaitts import Ui_openaittsform
 from videotrans.ui.xaitts import Ui_xaittsform
-from videotrans.ui.mitts import Ui_mittsform
+from videotrans.ui.xiaomi import Ui_xiaomiform
 from videotrans.ui.openrouter import Ui_openrouterform
 from videotrans.ui.ott import Ui_ottform
 from videotrans.ui.parakeet import Ui_parakeetform
@@ -76,6 +76,7 @@ from videotrans.ui.zijierecognmodel import Ui_zijierecognform
 from videotrans.ui.cambtts import Ui_cambttsform
 from videotrans.ui.cambtrans import Ui_cambtransform
 from videotrans.ui.cambasr import Ui_cambasrform
+from videotrans.ui.refaudio import Ui_refform
 
 
 class CommonBaseMixin:
@@ -100,6 +101,11 @@ class QWidgetBase(QtWidgets.QWidget,CommonBaseMixin):
 class BaiduForm(QDialogBase, Ui_baiduform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
+
+class RefaudioForm(QDialogBase, Ui_refform):  # <===
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
 
 
 class OpenrouterForm(QDialogBase, Ui_openrouterform):  # <===
@@ -134,7 +140,7 @@ class OpenAITTSForm(QDialogBase, Ui_openaittsform):  # <===
 class XAITTSForm(QDialogBase, Ui_xaittsform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
-class MITTSForm(QDialogBase, Ui_mittsform):  # <===
+class XiaomiForm(QDialogBase, Ui_xiaomiform):  # <===
     def __init__(self, parent=None):
         super().__init__(parent)
 

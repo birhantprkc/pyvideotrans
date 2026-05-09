@@ -17,7 +17,7 @@ from videotrans.util.contants import (
     no_proxy, DEFAULT_GEMINI_MODEL, OPENAITTS_ROLES, ChatTTS_VOICE, Qwentts_Models,
     Whisper_Models, Zijiehuoshan_Model, Zhipuai_Model, Localllm_Model, Azure_Model,
     Chatgpt_Model, Openairecognapi_Model, Qpenaitts_Model, Qwenmt_Model, Ai302_Models,
-    Whisper_cpp_models, Deepseek_Model, Openrouter_Model, Guiji_Model,MINIMAX_MODELS,ELEVENLABS_TTS_MODELS,MINIMAX_TTS_MODELS,GEMINITTS_ROLES,GEMINI_TTS_MODELS
+    Whisper_cpp_models, Deepseek_Model, Openrouter_Model, Guiji_Model,MINIMAX_MODELS,ELEVENLABS_TTS_MODELS,MINIMAX_TTS_MODELS,GEMINITTS_ROLES,GEMINI_TTS_MODELS,XIAOMI_MODELS,XIAOMI_TTS_MODELS
 )
 
 IS_FROZEN = True if getattr(sys, 'frozen', False) else False
@@ -312,6 +312,7 @@ class AppSettings:
             "localllm_model": Localllm_Model,
             "zhipuai_model": Zhipuai_Model,
             "deepseek_model": Deepseek_Model,
+            "xiaomi_model":XIAOMI_MODELS,
             "openrouter_model": Openrouter_Model,
             "guiji_model": Guiji_Model,
             "zijiehuoshan_model": Zijiehuoshan_Model,
@@ -337,6 +338,7 @@ class AppSettings:
             "countdown_sec": 30,
             "backaudio_volume": 0.8,
             "loop_backaudio": 1,
+            "pseudo_original":False,
             "cuda_com_type": "default",
             "initial_prompt_zh-cn": "",  # 注意：在对象中会映射为 _zh_cn
             "initial_prompt_zh-tw": "",
@@ -374,7 +376,7 @@ class AppSettings:
             "beam_size": 5,
             "best_of": 5,
             "minimax_model":MINIMAX_MODELS,
-            "uvr_models":"UVR-MDX-NET-Inst_HQ_4",
+            "uvr_models":"spleeter",
             "condition_on_previous_text": False,
             "temperature": "",
             "repetition_penalty": 1.0,
@@ -500,6 +502,7 @@ class AppParams:
             "line_roles": {},
             "rephrase": 0,
             "is_separate": False,
+            "clear_cache":True,
             "embed_bgm": True,
             "remove_noise": False,
             "enable_diariz": False,
@@ -599,7 +602,12 @@ class AppParams:
             "openaitts_role":"",
             
             "xaitts_key":"",
-            "mitts_key":"",
+            
+            "xiaomi_ttsmodel":XIAOMI_TTS_MODELS.split(',')[0],
+            "xiaomi_key":"",
+            "xiaomi_model":XIAOMI_MODELS.split(',')[0],
+            "xiaomi_maxtoken":"18092",
+            
 
             "openaitts_instructions": "",
             "qwentts_key": "",

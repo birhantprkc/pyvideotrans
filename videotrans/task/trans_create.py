@@ -52,12 +52,21 @@ class TransCreate(BaseTask):
     # 是否是音频翻译任务，如果是，则到配音完毕即结束，无需合并
     is_audio_trans: bool = False
     queue_tts: List = field(default_factory=list, repr=False)
+    clone_ref:str=""
 
     def __post_init__(self):
         # 首先，处理本类的默认配置
         super().__post_init__()
-        if self.cfg.clear_cache and Path(self.cfg.target_dir).is_dir():
-            shutil.rmtree(self.cfg.target_dir, ignore_errors=True)
+        # 临时文件夹
+        if not self.cfg.cache_folder:
+            self.cfg.cache_folder = f"{TEMP_DIR}/{self.uuid}"
+        # 清理缓存
+        if self.cfg.clear_cache:
+            if Path(self.cfg.target_dir).is_dir():
+                shutil.rmtree(self.cfg.target_dir, ignore_errors=True)
+            if Path(self.cfg.cache_folder).is_dir():
+                shutil.rmtree(self.cfg.cache_folder, ignore_errors=True)
+            
         self._signal(text=tr('kaishichuli'))
         # -1=不启用说话人，0=启用并且不限制说话人数量，>0+1 为最大说话人数量
         self.max_speakers = self.cfg.nums_diariz if self.cfg.enable_diariz else -1
@@ -70,9 +79,6 @@ class TransCreate(BaseTask):
         if tools.vail_file(self.cfg.back_audio):
             self.cfg.background_music = Path(self.cfg.back_audio).as_posix()
 
-        # 临时文件夹
-        if not self.cfg.cache_folder:
-            self.cfg.cache_folder = f"{TEMP_DIR}/{self.uuid}"
         # 输出文件夹，去掉可能存在的双斜线
         self.cfg.target_dir = re.sub(r'/{2,}', '/', self.cfg.target_dir, flags=re.I | re.S)
         # 检测字幕原始语言
@@ -244,6 +250,7 @@ class TransCreate(BaseTask):
 
         if audio_stream_len > 0 and not tools.vail_file(self.cfg.source_wav) and tools.vail_file(self.cfg.vocal):
             # 如果存在人声文件(可能仅仅分离成功人声，或者单独将其他工具分离出的人声放入目标文件夹)，则使用该文件作为语音识别文件
+            self.clone_ref=self.cfg.vocal
             cmd = [
                 "-y",
                 "-i",
@@ -287,12 +294,16 @@ class TransCreate(BaseTask):
             raise RuntimeError(error)
 
         # 若已执行背景声人声分离，则不再进行降噪
-        if not self.cfg.is_separate and self.cfg.remove_noise:
-            title = tr("Starting to process speech noise reduction, which may take a long time, please be patient")
+        #if not self.cfg.is_separate and self.cfg.remove_noise:
+        if self.cfg.remove_noise:
             _remove_noise_wav=f"{self.cfg.cache_folder}/remove_noise.wav"
-            _cache_noise_wav=f"{self.cfg.target_dir}/removed_noise.wav"
-            if not Path(_cache_noise_wav).exists():
-                tools.check_and_down_ms(model_id='iic/speech_frcrn_ans_cirm_16k', callback=self._process_callback)
+            if tools.vail_file(_remove_noise_wav):
+                self.cfg.source_wav = _remove_noise_wav
+                self.clone_ref=_remove_noise_wav
+                logger.debug(f'复用已存在的降噪缓存文件')
+            else:
+                title = tr("Starting to process speech noise reduction, which may take a long time, please be patient")
+                tools.down_file_from_ms(f'{ROOT_DIR}/models/onnx', urls=['https://modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/dpdfnet4.onnx'], callback=self._process_callback)
                 from videotrans.process.prepare_audio import remove_noise
                 kw = {
                     "input_file": self.cfg.source_wav,
@@ -302,14 +313,12 @@ class TransCreate(BaseTask):
                 try:
                     _rs = self._new_process(callback=remove_noise, title=title, is_cuda=self.cfg.is_cuda, kwargs=kw)
                     if _rs:
-                        self.cfg.source_wav = _rs
-                        shutil.copy2(_rs,_cache_noise_wav)
+                        self.cfg.source_wav = _remove_noise_wav
+                        self.clone_ref=_remove_noise_wav
                     self._signal(text='remove noise end')
-                except:
-                    pass
-            else:
-                shutil.copy2(_cache_noise_wav,_remove_noise_wav)
-                self.cfg.source_wav = _remove_noise_wav
+                except Exception as e:
+                    logger.exception(f'降噪静默失败{e}',exc_info=True)
+
 
         self._signal(text=tr("Speech Recognition to Word Processing"))
 
@@ -319,7 +328,8 @@ class TransCreate(BaseTask):
                 xxl_path,
                 self.cfg.source_wav,
                 "-pp",
-                "-f", "srt"
+                "-f", "srt",
+                "-ct",settings.get('cuda_com_type', 'int8')
             ]
             cmd.extend(['-l', self.cfg.detect_language.split('-')[0]])
             prompt = None
@@ -510,7 +520,8 @@ class TransCreate(BaseTask):
                     xxl_path,
                     shibie_audio,
                     "-pp",
-                    "-f", "srt"
+                    "-f", "srt",
+                    "-ct",settings.get('cuda_com_type', 'int8')
                 ]
                 cmd.extend(['-l', detect_language.split('-')[0]])
                 prompt = settings.get(f'initial_prompt_{detect_language}')
@@ -856,10 +867,10 @@ class TransCreate(BaseTask):
                 logger.exception(e, exc_info=True)
         self.hasend = True
         self.precent = 100
-        try:
-            shutil.rmtree(self.cfg.cache_folder, ignore_errors=True)
-        except:
-            pass
+        #try:
+        #    shutil.rmtree(self.cfg.cache_folder, ignore_errors=True)
+        #except:
+        #    pass
         self._signal(text=f"{self.cfg.name}", type='succeed')
         tools.send_notification(tr('Succeed'), f"{self.cfg.basename}")
 
@@ -953,9 +964,16 @@ class TransCreate(BaseTask):
             return
         title = tr('Separating vocals and background music, which may take a longer time')
         uvr_models=settings.get('uvr_models')
-        tools.down_file_from_ms(f'{ROOT_DIR}/models/onnx', [
-            f"https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/{uvr_models}.onnx"
-        ], callback=self._process_callback)
+        if uvr_models.startswith('spleeter'):
+            tools.down_file_from_ms(f'{ROOT_DIR}/models/onnx', [
+                f"https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/vocals.fp16.onnx",
+                f"https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/accompaniment.fp16.onnx"
+            ], callback=self._process_callback)
+
+        else:
+            tools.down_file_from_ms(f'{ROOT_DIR}/models/onnx', [
+                f"https://www.modelscope.cn/models/himyworld/videotrans/resolve/master/onnx/{uvr_models}.onnx"
+            ], callback=self._process_callback)
         from videotrans.process.prepare_audio import vocal_bgm
         # 返回 False None 失败
         kw = {"input_file": tmpfile, "vocal_file": self.cfg.vocal, "instr_file": self.cfg.instrument,"uvr_models":uvr_models}
@@ -1008,6 +1026,8 @@ class TransCreate(BaseTask):
                 continue
             # 判断是否存在单独设置的行角色，如果不存在则使用全局
             voice = 'clone' if force_clone else line_roles.get(f'{it["line"]}', voice_role)
+            
+            _key=tools.get_md5(f"{it['text']}-{voice}-{rate}-{self.cfg.volume}-{self.cfg.pitch}-{self.cfg.tts_type}")
 
             tmp_dict = {
                 "text": it['text'],
@@ -1026,7 +1046,7 @@ class TransCreate(BaseTask):
                 "volume": self.cfg.volume,
                 "pitch": self.cfg.pitch,
                 "tts_type": self.cfg.tts_type,
-                "filename": f"{self.cfg.cache_folder}/dubb-{i}.wav"
+                "filename": f"{self.cfg.cache_folder}/dubb-{i}-{_key}.wav"
             }
             # 如果是clone-voice类型， 需要截取对应片段
             # 是克隆
@@ -1064,7 +1084,7 @@ class TransCreate(BaseTask):
     # 多线程实现裁剪参考音频
     def _create_ref_from_vocal(self):
         # 背景分离人声如果失败则直接使用原始音频
-        vocal = self.cfg.source_wav
+        vocal = self.cfg.source_wav if not self.clone_ref or not Path(self.clone_ref).exists() else self.clone_ref
 
         # 裁切对应片段为参考音频
         def _cutaudio_from_vocal(it):
@@ -1088,7 +1108,7 @@ class TransCreate(BaseTask):
             if len(all_task) > 0:
                 _ = [i.result() for i in all_task]
 
-    # 添加背景音乐
+    # 添加手动上传的额外背景音乐
     def _back_music(self) -> None:
         if self._exit() or not self.shoud_dubbing:
             return
@@ -1105,7 +1125,7 @@ class TransCreate(BaseTask):
             self.convert_to_wav(self.cfg.background_music, bgm_file)
             self.cfg.background_music = bgm_file
             beishu = math.ceil(vtime / atime)
-            if settings.get('loop_backaudio') and beishu > 1 and vtime - 1000 > atime:
+            if self.cfg.loop_backaudio and beishu > 1 and vtime - 1000 > atime:
                 # 获取延长片段
                 file_list = [self.cfg.background_music for n in range(beishu + 1)]
                 concat_txt = self.cfg.cache_folder + f'/{time.time()}.txt'
@@ -1115,17 +1135,14 @@ class TransCreate(BaseTask):
                     out=self.cfg.cache_folder + "/bgm_file_extend.wav")
                 self.cfg.background_music = self.cfg.cache_folder + "/bgm_file_extend.wav"
             # 背景音频降低音量
-            tools.runffmpeg(
-                ['-y',
-                 '-i', self.cfg.background_music,
-                 "-filter:a", f"volume={settings.get('backaudio_volume', 0.8)}",
-                 '-c:a', 'pcm_s16le',
-                 self.cfg.cache_folder + f"/bgm_file_extend_volume.wav"
-                 ])
+            if settings.get('pseudo_original'):
+                # 背景音进行伪原创处理
+                self.cfg.background_music=self._pseudo_original(self.cfg.background_music)
+
             # 背景音频和配音合并
             cmd = ['-y',
                    '-i', os.path.basename(self.cfg.target_wav),
-                   '-i', "bgm_file_extend_volume.wav",
+                   '-i', self.cfg.background_music,
                    '-filter_complex', "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2",
                    '-ac', '2',
                    '-c:a', 'pcm_s16le',
@@ -1153,7 +1170,7 @@ class TransCreate(BaseTask):
             instrument_file = self.cfg.instrument
             logger.debug(f'合并背景音 {beishu=},{atime=},{vtime=}')
             if atime + 1000 < vtime:
-                if int(settings.get('loop_backaudio'))==1:
+                if int(self.cfg.loop_backaudio)==1:
                     # 背景音连接延长片段
                     file_list = [instrument_file for n in range(beishu + 1)]
                     concat_txt = self.cfg.cache_folder + f'/{time.time()}.txt'
@@ -1165,18 +1182,34 @@ class TransCreate(BaseTask):
                     tools.change_speed_rubberband(instrument_file, self.cfg.cache_folder + f"/instrument-concat.wav", vtime)
                 instrument_file=self.cfg.cache_folder + f"/instrument-concat.wav"
             # 背景音合并配音
+            if settings.get('pseudo_original'):
+                # 背景音进行伪原创处理
+                instrument_file=self._pseudo_original(instrument_file)
             self._backandvocal(instrument_file, self.cfg.target_wav)
         except Exception as e:
             logger.exception(e, exc_info=True)
 
-    # 合并后最后文件仍为 人声文件，时长需要等于人声
+    def _pseudo_original(self,input_audio):
+        from . import pseudo
+        out_file=f'{input_audio}-pseudo.wav'
+        try:
+            self.precent+=1
+            self._signal(text='Pseudo-original processing of background music...')
+            logger.debug(f'[对背景音进行伪原创处理]{input_audio=}')
+            pseudo.process_audio(input_audio,out_file)
+        except Exception as e:
+            logger.exception(e,exc_info=True)
+            return input_audio
+        return out_file
+
+    # 合并分离出的背景音和人声文件，时长需要等于人声
     def _backandvocal(self, backwav, peiyinm4a):
         backwav = Path(backwav).as_posix()
         tmpdir = self.cfg.cache_folder
         tmpwav = Path(tmpdir + f'/{time.time()}-1.wav').as_posix()
         tmpm4a = Path(tmpdir + f'/{time.time()}.wav').as_posix()
         # 背景转为m4a文件,音量降低为0.8
-        self.convert_to_wav(backwav, tmpm4a, ["-filter:a", f"volume={settings.get('backaudio_volume', 0.8)}"])
+        self.convert_to_wav(backwav, tmpm4a, ["-filter:a", f"volume={self.cfg.backaudio_volume}"])
         tools.runffmpeg(['-y', '-i', os.path.basename(peiyinm4a), '-i', os.path.basename(tmpm4a), '-filter_complex',
                          "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2", '-ac', '2', "-b:a", "128k",
                          '-c:a', 'pcm_s16le', os.path.basename(tmpwav)], cmd_dir=self.cfg.cache_folder)
@@ -1203,6 +1236,8 @@ class TransCreate(BaseTask):
                                                                                         'yu'] else
             settings.get('other_len', 60))
         target_sub_list = tools.get_subtitle_from_srt(self.cfg.target_sub)
+        
+        
         
         srt_string = ""
         # 双硬字幕时的两种语言字幕分割符，用于定义不同样式
@@ -1343,7 +1378,7 @@ class TransCreate(BaseTask):
             except Exception:
                 pass
 
-            # 添加背景音乐
+            # 手动添加的背景音乐嵌入
             self._back_music()
             # 重新嵌入分离出的背景音
             self._separate()

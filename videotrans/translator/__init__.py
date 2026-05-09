@@ -42,7 +42,8 @@ LIBRE_INDEX = 20
 MyMemoryAPI_INDEX = 21
 TRANSAPI_INDEX = 22
 MINIMAX_INDEX = 23
-CAMB_INDEX = 24
+XIAOMI_INDEX = 24
+CAMB_INDEX = 25
 
 
 
@@ -60,6 +61,7 @@ AI_TRANS_CHANNELS=[
     DEEPSEEK_INDEX,
     OPENROUTER_INDEX,
     MINIMAX_INDEX,
+    XIAOMI_INDEX,
     CAMB_INDEX
 ]
 # 翻译通道名字列表，显示在界面
@@ -94,6 +96,7 @@ _ID_NAME_DICT = {
     MyMemoryAPI_INDEX:tr('MyMemoryAPI'),
     TRANSAPI_INDEX:tr('Customized API'),
     MINIMAX_INDEX:"MiniMax AI",
+    XIAOMI_INDEX:"XiaoMi AI",
     CAMB_INDEX:"CAMB AI",
 }
 TRANSLASTE_NAME_LIST=list(_ID_NAME_DICT.values())
@@ -141,7 +144,8 @@ LANGNAME_DICT = {
     "fil": tr("Filipino"),
     "ur": tr("Urdu"),
     "nb": tr("Norway"),# 书面挪威语
-    "yue": tr("Cantonese")
+    "yue": tr("Cantonese"),
+    "km": tr("Khmer"),# 高棉
 }
 
 # 如果存在新增
@@ -194,6 +198,19 @@ LANG_CODE = {
         "ur",  # 阿里
         "Urdu",
         "ur" # m2m100
+    ],
+    "km": [
+        "km",  # google通道
+        "khm",  # 字幕嵌入语言
+        "km",  # 百度通道
+        "No",  # deepl deeplx通道
+        "No",  # 腾讯通道
+        "No",  # OTT通道
+        "km",  # 微软翻译
+        "Khmer",  # AI翻译
+        "km",  # 阿里
+        "Khmer",
+        "km" # m2m100
     ],
     "yue": [
         "yue",  # google通道
@@ -724,6 +741,12 @@ def is_allow_translate(*, translate_type=None, show_target=None, only_key=False,
         from videotrans.winform import deepseek
         deepseek.openwin()
         return False
+    if translate_type == XIAOMI_INDEX and not params.get('xiaomi_key',''):
+        if return_str:
+            return "请在菜单-Xiaomi中填写api key"
+        from videotrans.winform import xiaomi
+        xiaomi.openwin()
+        return False
     if translate_type == OPENROUTER_INDEX and not params.get('openrouter_key',''):
         if return_str:
             return "请在菜单-OpenRouter中填写api key"
@@ -1015,6 +1038,9 @@ def run(*, translate_type=0,
     if translate_type == DEEPSEEK_INDEX:
         from videotrans.translator._deepseek import DeepSeek
         return DeepSeek(**kwargs).run()
+    if translate_type == XIAOMI_INDEX:
+        from videotrans.translator._xiaomi import XiaoMi
+        return XiaoMi(**kwargs).run()
 
     if translate_type == SILICONFLOW_INDEX:
         from videotrans.translator._siliconflow import SILICONFLOW

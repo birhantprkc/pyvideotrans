@@ -2,31 +2,6 @@
 import copy
 
 from videotrans.configure.config import tr,params,settings,app_cfg,logger
-
-from videotrans.tts._minimaxi import MinimaxiTTS
-from videotrans.tts._freeazure import FreeAzureTTS
-from videotrans.tts._cosyvoice import CosyVoice
-from videotrans.tts._omnivoice import OmniVoice
-from videotrans.tts._ai302tts import AI302
-from videotrans.tts._chattts import ChatTTS
-from videotrans.tts._fishtts import FishTTS
-from videotrans.tts._kokoro import KokoroTTS
-from videotrans.tts._gptsovits import GPTSoVITS
-from videotrans.tts._chatterbox import ChatterBoxTTS
-from videotrans.tts._clone import CloneVoice
-from videotrans.tts._openaitts import OPENAITTS
-from videotrans.tts._elevenlabs import ElevenLabsC
-from videotrans.tts._gtts import GTTS
-from videotrans.tts._geminitts import GEMINITTS
-from videotrans.tts._qwenttslocal import QwenttsLocal
-from videotrans.tts._ttsapi import TTSAPI
-from videotrans.tts._doubao import DoubaoTTS
-from videotrans.tts._doubao2 import Doubao2TTS
-from videotrans.tts._f5tts import F5TTS
-from videotrans.tts._glmtts import GLMTTS
-from videotrans.tts._xaitts import XAITTS
-from videotrans.tts._mitts import MITTS
-from videotrans.tts._cambtts import CambTTS
 from videotrans.tts._mosstts import MossTTS
 
 EDGE_TTS = 0
@@ -90,44 +65,44 @@ SUPPORT_CLONE=[
 ]
 _ID_NAME_DICT = {
     EDGE_TTS: tr("Edge-TTS(free)"),
-    QWEN3LOCAL_TTS: f"Qwen3-TTS({tr('Local')})",
-    OMNIVOICE_TTS: "OmniVoice",
-    PIPER_TTS: f'piper TTS({tr("Local")})',
-    VITSCNEN_TTS: f'VITS({tr("Local")})',
+    QWEN3LOCAL_TTS: f"Qwen3-TTS({tr('Local')}{tr('Built-in')})",
+    OMNIVOICE_TTS: f"OmniVoice({tr('Local')}API)",
+    PIPER_TTS: f"Piper({tr('Local')}{tr('Built-in')})",
+    VITSCNEN_TTS: f"VITS({tr('Local')}{tr('Built-in')})",
 
-    QWEN_TTS: "Qwen3-TTS(BailianAPI)",
+    QWEN_TTS: "Qwen3-TTS",
     DOUBAO2_TTS: tr("DouBao2"),
     DOUBAO_TTS: tr("VolcEngine TTS"),
-    GLM_TTS: f'{tr("Zhipu AI")} GLM-TTS',
+    GLM_TTS: f'GLM-TTS {tr("Zhipu AI")}',
 
-    GPTSOVITS_TTS: f"GPT-SoVITS({tr('Local')})",
-    F5_TTS: f"F5-TTS({tr('Local')})",
-    INDEX_TTS: f"Index TTS({tr('Local')})",
-    COSYVOICE_TTS: f"CosyVoice({tr('Local')})",
-    Supertonic_TTS: f"Supertonic({tr('Local')})",
+    GPTSOVITS_TTS: f"GPT-SoVITS({tr('Local')}API)",
+    F5_TTS: f"F5-TTS({tr('Local')}API)",
+    INDEX_TTS: f"Index-TTS({tr('Local')}API)",
+    COSYVOICE_TTS: f"CosyVoice({tr('Local')}API)",
+    Supertonic_TTS: f"Supertonic({tr('Local')}{tr('Built-in')})",
 
-    MINIMAXI_TTS: "Minimaxi TTS",
-    OPENAI_TTS: "OpenAI TTS",
+    MINIMAXI_TTS: "Minimaxi-TTS",
+    OPENAI_TTS: "OpenAI-TTS",
     AI302_TTS: "302.AI",
     ELEVENLABS_TTS: "Elevenlabs.io",
     AZURE_TTS: "Azure-TTS",
     GEMINI_TTS: "Gemini TTS",
 
-    VOXCPM_TTS: f"VoxCPM TTS({tr('Local')})",
-    CHATTERBOX_TTS: f"ChatterBox TTS({tr('Local')})",
-    CHATTTS: f"ChatTTS({tr('Local')})",
-    SPARK_TTS: f"Spark TTS({tr('Local')})",
-    DIA_TTS: f"Dia TTS({tr('Local')})",
-    KOKORO_TTS: f"kokoro TTS({tr('Local')})",
-    CLONE_VOICE_TTS: f"clone-voice({tr('Local')})",
-    FISHTTS: f"Fish TTS({tr('Local')})",
+    VOXCPM_TTS: f"VoxCPM({tr('Local')}API)",
+    CHATTERBOX_TTS: f"ChatterBox({tr('Local')}API)",
+    CHATTTS: f"ChatTTS({tr('Local')}API)",
+    SPARK_TTS: f"Spark-TTS({tr('Local')}API)",
+    DIA_TTS: f"Dia-TTS({tr('Local')}API)",
+    KOKORO_TTS: f"kokoro-TTS({tr('Local')}API)",
+    CLONE_VOICE_TTS: f"clone-voice({tr('Local')}API)",
+    FISHTTS: f"Fish-TTS({tr('Local')}API)",
 
     FreeAzure: tr('Azure(free)'),
 
     GOOGLE_TTS: "gTTS(free)",
 
     XAI_TTS: 'X.AI TTS',
-    XIAOMI_TTS:'xiaomi TTS',
+    XIAOMI_TTS:'XiaoMi-TTS',
     TTS_API: tr("Customize API"),
 
     CAMB_TTS: "CAMB AI TTS",
@@ -182,10 +157,10 @@ def is_input_api(tts_type: int = None, return_str=False):
         from videotrans.winform import xaitts as xaitts_win
         xaitts_win.openwin()
         return False
-    if tts_type == XIAOMI_TTS and not params.get("mitts_key", ''):
+    if tts_type == XIAOMI_TTS and not params.get("xiaomi_key", ''):
         if return_str:
             return "Please configure the api key information of the xiaomi TTS  channel first."
-        from videotrans.winform import mitts as mitts_win
+        from videotrans.winform import xiaomi as mitts_win
         mitts_win.openwin()
         return False
     
@@ -441,8 +416,8 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
         from videotrans.tts._xaitts import XAITTS
         XAITTS(**kwargs).run()
     elif tts_type == XIAOMI_TTS:
-        from videotrans.tts._mitts import MITTS
-        MITTS(**kwargs).run()
+        from videotrans.tts._xiaomi import XiaoMiTTS
+        XiaoMiTTS(**kwargs).run()
     elif tts_type == CAMB_TTS:
         from videotrans.tts._cambtts import CambTTS
         CambTTS(**kwargs).run()
