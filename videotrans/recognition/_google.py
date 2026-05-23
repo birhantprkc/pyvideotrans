@@ -3,31 +3,25 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Union
 
 import speech_recognition as sr
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_not_exception_type, before_log, after_log
-from videotrans.configure._except import NO_RETRY_EXCEPT
-from videotrans.configure.config import tr,settings,params,app_cfg,logger
-from videotrans.recognition._base import BaseRecogn
-from videotrans.util import tools
 
-RETRY_NUMS = 2
-RETRY_DELAY = 10
+from videotrans.configure.config import tr, settings, logger
+from videotrans.configure.excepts import NO_RETRY_EXCEPT
+from videotrans.recognition._base import BaseRecogn
+from videotrans.task.taskcfg import SrtItem
+from videotrans.util import tools
 
 
 @dataclass
 class GoogleRecogn(BaseRecogn):
 
-    def __post_init__(self):
-        super().__post_init__()
-
-    @retry(retry=retry_if_not_exception_type(NO_RETRY_EXCEPT), stop=(stop_after_attempt(RETRY_NUMS)),
-           wait=wait_fixed(RETRY_DELAY), before=before_log(logger, logging.INFO),
-           after=after_log(logger, logging.INFO))
-    def _exec(self) -> Union[List[Dict], None]:
+    @retry(retry=retry_if_not_exception_type(NO_RETRY_EXCEPT), stop=(stop_after_attempt(settings.get('retry_nums'))), wait=wait_fixed(2), before=before_log(logger, logging.INFO),  after=after_log(logger, logging.INFO))
+    def _exec(self) -> Union[List[SrtItem], None]:
         if self._exit():  return
 
         tmp_path = Path(f'{self.cache_folder}/{Path(self.audio_file).name}_tmp')
@@ -37,7 +31,8 @@ class GoogleRecogn(BaseRecogn):
         normalized_sound = AudioSegment.from_wav(self.audio_file)  # -20.0
         nonslient_file = f'{tmp_path}/detected_voice.json'
         if tools.vail_file(nonslient_file):
-            nonsilent_data = json.load(open(nonslient_file, 'r'))
+            with open(nonslient_file, 'r') as f:
+                nonsilent_data = json.load(f)
         else:
             nonsilent_data = self._shorten_voice_old(normalized_sound)
             with open(nonslient_file, 'w') as f:
@@ -62,7 +57,7 @@ class GoogleRecogn(BaseRecogn):
                     text = recognizer.recognize_google(audio_data, language=self.detect_language)
                 except sr.UnknownValueError:
                     text = ""
-                except sr.RequestError as e:
+                except sr.RequestError:
                     raise
 
             text = re.sub(r'&#\d+;', '', f"{text.capitalize()}. ".replace('&#39;', "'"),flags=re.I | re.S).strip()
@@ -71,18 +66,18 @@ class GoogleRecogn(BaseRecogn):
             start = tools.ms_to_time_string(ms=start_time)
 
             end = tools.ms_to_time_string(ms=end_time)
-            srt_line = {
-                "line": len(self.raws) + 1,
-                "time": f"{start} --> {end}",
-                "text": text,
-                "start_time": start_time,
-                "end_time": end_time,
-                "startraw": start,
-                "endraw": end
-            }
+            srt_line = SrtItem(
+                line=len(self.raws) + 1,
+                time=f"{start} --> {end}",
+                text=text,
+                start_time=start_time,
+                end_time=end_time,
+                startraw=start,
+                endraw=end
+            )
             self.raws.append(srt_line)
-            self._signal(text=f"{tr('yuyinshibiejindu')} {srt_line['line']}/{total_length}")
-            self._signal(text=f"{srt_line['text']}\n", type='subtitle')
+            self.signal(text=f"{tr('yuyinshibiejindu')} {srt_line['line']}/{total_length}")
+            self.signal(text=f"{srt_line['text']}\n", type='subtitle')
         return self.raws
 
     def match_target_amplitude(self, sound, target_dBFS):

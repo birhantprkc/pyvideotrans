@@ -1,7 +1,10 @@
 # 单独一个线程用于检测 GPU 数量
 import time
+import traceback
 
 from PySide6.QtCore import QThread, Signal
+
+from videotrans.configure.config import logger
 
 
 class AiLoaderThread(QThread):
@@ -12,9 +15,8 @@ class AiLoaderThread(QThread):
             _st = time.time()
             from . import gpus
             _count = gpus.getset_gpu()
-            print(f"Found {_count} GPUs, cost={int(time.time() - _st)}s")
+            logger.debug(f"Found {_count} GPUs, cost={int(time.time() - _st)}s")
             self.gpu_io.emit("end")
-        except Exception:
-            import traceback
+        except Exception as e:
             err = traceback.format_exc()
-            self.gpu_io.emit(err)
+            self.gpu_io.emit(f'{e},{err}')

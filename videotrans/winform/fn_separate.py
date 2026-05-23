@@ -2,11 +2,11 @@
 
 def openwin():
     import os
-    from videotrans.util import contants
+    from videotrans.configure import contants
     from pathlib import Path
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QFileDialog
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure.config import tr,app_cfg, params, HOME_DIR
     # 分离背景音
     from videotrans.util import tools
 
@@ -49,15 +49,11 @@ def openwin():
         # 已在执行，在此点击停止
         if winobj.has_done:
             winobj.has_done = False
-            del app_cfg.uuid_logs_queue[uuid]
             winobj.set.setText(tr('Start Separate'))
             return
         winobj.has_done = True
-        if uuid in app_cfg.uuid_logs_queue:
-            del app_cfg.uuid_logs_queue[uuid]
 
         winobj.set.setText(tr('Start Separate...'))
-        basename = Path(file).stem
         # 判断名称是否正常
         # 创建文件夹
         Path(outdir).mkdir(parents=True,exist_ok=True)

@@ -130,7 +130,7 @@
     "Do not include files with the same name but different extensions, this can lead to confusion, please modify {}": "Duplicate names with diff extensions forbidden: {}",
     "Documents": "Docs",
     "Donate to help the software to keep on maintaining": "Donate to Support",
-    "Donating developers": "Donate/Contact",
+    "Donating developers": "About / Contact / Donate",
     "Download Hard Subtitle Extraction Software": "Get Hard Sub Extractor",
     "Download Models": "Download Models",
     "Dubbing": "Dubbing...",
@@ -256,6 +256,7 @@
     "Mix two audio files into one audio file": "Mix 2 Audio Files into 1",
     "Mixing 2 Audio Streams": "Mixing 2 Streams",
     "Model": "Model",
+    "ASRModel": "ASR Model",
     "Model Selection Tutorial": "Model Selection Guide",
     "Model loading is complete, enter recognition": "Model Loaded. Starting Recognition.",
     "Models ending in .en may not be used for automated detection": ".en models cannot use Auto Detect",
@@ -747,7 +748,7 @@
     "Disagree": "Disagree & Exit",
     "Are you sure the cleanup has been output?": "Confirm Cleanup? (Irreversible)",
     "If you confirm to clean up, all files in the output directory will be deleted. If you manually specify the output directory, please make sure there are no important files in the directory and back it up in advance to avoid data loss.": "Warning: Deletes matching folders in Output Dir. Ensure no important data in [{}] before proceeding.",
-    "The output directory is not allowed to point to the input directory. Please use the default or create an empty folder as the output": "Output Dir cannot be Input Dir. Use default or new folder.",
+    "The output directory is not allowed to point to the input directory": "Output Dir cannot be Input Dir. Use a new folder.",
     "Setting up a network proxy": "Setup Proxy",
     "Click on faster-xxl": "Select Faster_Whisper_XXL.exe",
     "Click on whisper-cli": "Select whisper-cli",
@@ -975,6 +976,10 @@
   "embed_bgm":"Re-embed BGM",
   "Norway":"Norwegian Bokmal",
   "Khmer":"Khmer",
-  "Set reference audio":"Set reference audio"
+  "Set reference audio":"Set reference audio",
+  "Creating progress bar, please wait": "Creating progress bar, please wait...",
+  "Translation results saved to:": "Translation results saved to: ",
+  "Romanian": "Romanian",
+  "may not support": " may not support "
 
 }

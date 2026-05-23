@@ -1,7 +1,7 @@
 def openwin():
     import os
     from PySide6 import QtWidgets
-    from videotrans.configure.config import tr,params,settings,app_cfg,logger
+    from videotrans.configure.config import tr,params,settings,app_cfg
     from videotrans.util import tools
     from videotrans.util.TestSrtTrans import TestSrtTrans
     def feed(d):
@@ -11,13 +11,12 @@ def openwin():
             QtWidgets.QMessageBox.information(winobj, "OK", d[3:])
         winobj.test_chatgpt.setText(tr("Test"))
 
+
+
     def test():
         key = winobj.chatgpt_key.text()
         max_token = winobj.chatgpt_max_token.text().strip()
-        url = winobj.chatgpt_api.text().strip()
-        url = url if url else 'https://api.openai.com/v1'
-        if not url.startswith('http'):
-            url = 'http://' + url
+        url = tools.process_openai_api(winobj.chatgpt_api.text().strip())
         model = winobj.chatgpt_model.currentText()
 
         os.environ['OPENAI_API_KEY'] = key
@@ -33,15 +32,11 @@ def openwin():
 
     def save_chatgpt():
         key = winobj.chatgpt_key.text()
-        url = winobj.chatgpt_api.text().strip()
+        url = tools.process_openai_api(winobj.chatgpt_api.text().strip())
         max_token = winobj.chatgpt_max_token.text().strip()
-        url = url if url else 'https://api.openai.com/v1'
-        if not url.startswith('http'):
-            url = 'http://' + url
         model = winobj.chatgpt_model.currentText()
 
         params["chatgpt_max_token"] = max_token
-        os.environ['OPENAI_API_KEY'] = key
         params["chatgpt_key"] = key
         params["chatgpt_api"] = url
         params["chatgpt_model"] = model

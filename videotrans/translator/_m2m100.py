@@ -4,8 +4,7 @@ import ctranslate2
 import sentencepiece as spm
 from dataclasses import dataclass
 from typing import List, Union
-
-from videotrans.configure.config import ROOT_DIR
+from videotrans.configure.config import ROOT_DIR,logger
 from videotrans.translator._base import BaseTrans
 import torch
 
@@ -46,6 +45,7 @@ _LANGUAGE_CODE_MAP = {
         "fi": "__tl__",# 菲律宾语
         "ur": "__ur__",
         "yu": "__zh__",
+        "ro": "__ro__",
         "nb": "__no__"
 }
 
@@ -57,7 +57,6 @@ class M2M100Trans(BaseTrans):
 
     def __post_init__(self):
         super().__post_init__()
-        self.aisendsrt = False
         if not self.source_code or self.source_code=='auto':
             self.from_lang='auto'
         else:
@@ -76,16 +75,13 @@ class M2M100Trans(BaseTrans):
         self.sentence_piece_processor = spm.SentencePieceProcessor(model_file=f'{ROOT_DIR}/models/m2m100_12b/sentencepiece.model')
         return True
 
-    def _process_callback(self,msg):
-        self._signal(text=msg)
-
     def _unload(self):
         try:
             self.model.unload_model()
             del self.model
             del self.sentence_piece_processor
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f'm2m100 unload error: {e}')
 
     def _item_task(self, data: Union[List[str], str]):
         queries = data if isinstance(data, list) else [data]
@@ -102,10 +98,9 @@ class M2M100Trans(BaseTrans):
             repetition_penalty=3,
         )
         translated = self.detokenize(list(map(lambda t: t[0]['tokens'], translated_tokenized)), self.to_lang)
-        print(f'{translated=}')
         return "\n".join([it.strip() for it in translated])
 
-    def tokenize(self, queries, lang):
+    def tokenize(self, queries, lang=None):
         sp = self.sentence_piece_processor
         if isinstance(queries, list):
             return sp.encode(queries, out_type=str)

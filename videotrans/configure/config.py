@@ -13,12 +13,17 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
 from PySide6.QtCore import QLocale
-from videotrans.util.contants import (
+
+from videotrans.task.taskcfg import SignMsg
+from videotrans.configure.contants import (
     no_proxy, DEFAULT_GEMINI_MODEL, OPENAITTS_ROLES, ChatTTS_VOICE, Qwentts_Models,
     Whisper_Models, Zijiehuoshan_Model, Zhipuai_Model, Localllm_Model, Azure_Model,
     Chatgpt_Model, Openairecognapi_Model, Qpenaitts_Model, Qwenmt_Model, Ai302_Models,
-    Whisper_cpp_models, Deepseek_Model, Openrouter_Model, Guiji_Model,MINIMAX_MODELS,ELEVENLABS_TTS_MODELS,MINIMAX_TTS_MODELS,GEMINITTS_ROLES,GEMINI_TTS_MODELS,XIAOMI_MODELS,XIAOMI_TTS_MODELS
+    Whisper_cpp_models, Deepseek_Model, Openrouter_Model, Guiji_Model, MINIMAX_MODELS, ELEVENLABS_TTS_MODELS, MINIMAX_TTS_MODELS,
+    GEMINI_TTS_MODELS, XIAOMI_MODELS, XIAOMI_TTS_MODELS
 )
+from videotrans.configure.signal_hub import SignalHub
+
 
 IS_FROZEN = True if getattr(sys, 'frozen', False) else False
 SYS_TMP = Path(tempfile.gettempdir()).as_posix()
@@ -27,9 +32,10 @@ ROOT_DIR = Path(sys.executable).parent.as_posix() if IS_FROZEN else Path(__file_
 TEMP_ROOT = f'{ROOT_DIR}/tmp'
 LOGS_DIR = f'{ROOT_DIR}/logs'
 TEMP_DIR= f'{TEMP_ROOT}/_temp'
+TRANSLATE_CACHE= f'{TEMP_ROOT}/translate_cache'
 
 Path(f"{ROOT_DIR}/logs").mkdir(parents=True, exist_ok=True)
-Path(f"{TEMP_ROOT}").mkdir(parents=True, exist_ok=True)
+Path(f"{TRANSLATE_CACHE}").mkdir(parents=True, exist_ok=True)
 
 def _set_env():
     # 环境变量设置
@@ -99,7 +105,7 @@ def _init_language():
         _defaulelang = os.environ.get('PYVIDEOTRANS_LANG', settings.lang)
         if not _defaulelang:
             _defaulelang = QLocale.system().name()[:2].lower()
-    except:
+    except Exception:
         _defaulelang = "en"
 
     if _defaulelang not in SUPPORT_LANG:
@@ -127,9 +133,9 @@ class AppCfg:
     # 显卡相关
     NVIDIA_GPU_NUMS: int = -1
 
-    # 队列与控制
+    # 队列与控制,用于跨不同事务，例如 转录、翻译、TTS、信号队列
     stoped_uuid_set: set = field(default_factory=set)
-    uuid_logs_queue: Dict = field(default_factory=dict)
+    # 存放消息日志
     global_msg: List = field(default_factory=list)
     exit_soft: bool = False
 
@@ -164,9 +170,22 @@ class AppCfg:
     dubbing_role: Dict = field(default_factory=dict)
     SUPPORT_LANG: Dict = field(default_factory=dict)
     proxy: str = ''
-
+    new_version_pvt = ""
     def __post_init__(self):
         self.SUPPORT_LANG=_get_langjson_list()
+
+    # 设置倒计时，用于单视频交互
+    def set_countdown(self,sec=86400):
+        self.task_countdown=sec
+
+    #从 stoped_uuid_set 中移出uuid，用于重复执行同个文件
+    def rm_uuid(self,uuid=None):
+        if not uuid:
+            return
+        try:
+            self.stoped_uuid_set.remove(uuid)
+        except KeyError:
+            pass
 
 
 @dataclass
@@ -231,7 +250,7 @@ class AppSettings:
             # 如果不在默认值里且不是特殊key，跳过
             if key not in default and py_key not in default:
                 continue
-
+            # 防止填写格式错误，先格式化为字符串，再简单判断类型
             value = str(val).strip()
             if re.match(r'^\d+$', value):
                 merged_settings[py_key] = int(value)
@@ -292,6 +311,7 @@ class AppSettings:
             "crf": 23,
             "edgetts_max_concurrent_tasks": 10,
             "edgetts_retry_nums": 3,
+            "del_end_punc":True,#删除每条字幕末尾的标点
             "force_lib": False,
             "hw_decode":False,# ffmpeg尝试硬件解码视频
             "preset": "medium",
@@ -299,10 +319,11 @@ class AppSettings:
             "aisendsrt": True,
             "dont_notify": False,
             "video_codec": 264,
+            "out_video_ext":".mp4",# [.mp4,.mkv]
             "noise_separate_nums": 4,
             "aitrans_temperature": 0.2,
             "aitrans_context": False,
-            "batch_single": False,
+            "batch_nums": 0,# 0=并发，1=串行翻译,>1 每批同时多少个
             "ai302_models": Ai302_Models,
             'qwenmt_model': Qwenmt_Model,
             "openaitts_model": Qpenaitts_Model,
@@ -338,41 +359,44 @@ class AppSettings:
             "countdown_sec": 30,
             "backaudio_volume": 0.8,
             "loop_backaudio": 1,
-            "pseudo_original":False,
             "cuda_com_type": "default",
-            "initial_prompt_zh-cn": "",  # 注意：在对象中会映射为 _zh_cn
-            "initial_prompt_zh-tw": "",
-            "initial_prompt_en": "",
-            "initial_prompt_fr": "",
-            "initial_prompt_de": "",
-            "initial_prompt_ja": "",
-            "initial_prompt_ko": "",
-            "initial_prompt_ru": "",
-            "initial_prompt_es": "",
-            "initial_prompt_th": "",
-            "initial_prompt_it": "",
-            "initial_prompt_el": "",
-            "initial_prompt_nb": "",
-            "initial_prompt_pt": "",
-            "initial_prompt_vi": "",
-            "initial_prompt_ar": "",
-            "initial_prompt_tr": "",
-            "initial_prompt_hi": "",
-            "initial_prompt_hu": "",
-            "initial_prompt_uk": "",
-            "initial_prompt_id": "",
-            "initial_prompt_ms": "",
-            "initial_prompt_kk": "",
-            "initial_prompt_cs": "",
-            "initial_prompt_pl": "",
-            "initial_prompt_nl": "",
-            "initial_prompt_sv": "",
-            "initial_prompt_he": "",
-            "initial_prompt_bn": "",
-            "initial_prompt_fil": "",
-            "initial_prompt_fa": "",
-            "initial_prompt_ur": "",
-            "initial_prompt_yue": "",
+            # 注意：在对象中会映射为 _zh_cn
+            "initial_prompt_zh-cn":"",
+            "initial_prompt_zh-tw":"",
+            "initial_prompt_en":"",
+            "initial_prompt_fr":"",
+            "initial_prompt_de":"",
+            "initial_prompt_ja":"",
+            "initial_prompt_ko":"",
+            "initial_prompt_ru":"",
+            "initial_prompt_es":"",
+            "initial_prompt_th":"",
+            "initial_prompt_it":"",
+            "initial_prompt_pt":"",
+            "initial_prompt_vi":"",
+            "initial_prompt_ar":"",
+            "initial_prompt_tr":"",
+            "initial_prompt_hi":"",
+            "initial_prompt_hu":"",
+            "initial_prompt_uk":"",
+            "initial_prompt_id":"",
+            "initial_prompt_ms":"",
+            "initial_prompt_km":"",
+            "initial_prompt_kk":"",
+            "initial_prompt_nb":"",
+            "initial_prompt_el":"",
+            "initial_prompt_cs":"",
+            "initial_prompt_pl":"",
+            "initial_prompt_nl":"",
+            "initial_prompt_bn":"",
+            "initial_prompt_he":"",
+            "initial_prompt_sv":"",
+            "initial_prompt_fa":"",
+            "initial_prompt_ur":"",
+            "initial_prompt_yue":"",
+            "initial_prompt_ro":"",
+            "initial_prompt_fil":"",
+
             "beam_size": 5,
             "best_of": 5,
             "minimax_model":MINIMAX_MODELS,
@@ -386,17 +410,17 @@ class AppSettings:
             "show_more_settings": False,
             "speaker_type": "built",
             "hf_token": "",
-            "cjk_len": 22,
-            "other_len": 46,
+            "cjk_len": 20,
+            "other_len": 48,
             "gemini_model": DEFAULT_GEMINI_MODEL,
             "llm_chunk_size": 50,
-            "llm_ai_type": "openai",
+            "llm_ai_type": "chatgpt",
             "gemini_recogn_chunk": 50,
             "zh_hant_s": True,
-            "process_max": 1,
+            "process_max": 0,
             "process_max_gpu": 1,
             "multi_gpus": False,
-            "azure_lines": 1,
+            "retry_nums":1,
             "chattts_voice": ChatTTS_VOICE,
             "proxy": ""
         }
@@ -451,9 +475,67 @@ class AppSettings:
         setattr(self, attr, value)
 
     def get(self, key, default=None):
+
+        float_type=[
+                "aitrans_temperature",
+                "threshold",
+                "no_speech_threshold",
+                "backaudio_volume",
+                "repetition_penalty",
+                "compression_ratio_threshold",
+            ]
+        # 对数字类型进行处理
+        int_type=[
+                "crf",
+                "edgetts_max_concurrent_tasks",
+                "edgetts_retry_nums",
+                "video_codec",
+                "noise_separate_nums",
+                "batch_nums",
+                "max_audio_speed_rate",
+                "max_video_pts_rate",
+                "min_speech_duration_ms",
+                "max_speech_duration_s",
+                "min_silence_duration_ms",
+                "trans_thread",
+                "aitrans_thread",
+                "translation_wait",
+                "dubbing_wait",
+                "dubbing_thread",
+                "countdown_sec",
+                "loop_backaudio",
+                "beam_size",
+                "best_of",
+                "cjk_len",
+                "other_len",
+                "llm_chunk_size",
+                "gemini_recogn_chunk",
+                "process_max",
+                "process_max_gpu",
+                "retry_nums",
+            ]
         try:
-            return self[key]
-        except AttributeError:
+            if key in int_type:
+                try:
+                    return int(self[key])
+                except (ValueError,TypeError,IndexError):
+                    default = self._get_defaults()
+                    return int(default[key])
+            elif key in float_type:
+                try:
+                    return float(self[key])
+                except (ValueError,TypeError,IndexError):
+                    default = self._get_defaults()
+                    return float(default[key])
+
+            vl=self[key]
+
+            if vl is False or  key.lower()=='false':
+                return False
+            if vl is True or key.lower()=='true':
+                return True
+            return str(self[key])
+        except (AttributeError,ValueError,IndexError,TypeError):
             return default
 
 
@@ -498,6 +580,7 @@ class AppParams:
         # 依赖 settings 中的值
         return {
             "last_opendir": os.path.expanduser("~"),
+            "output_dir":"",# 视频翻译结果保存到的目录，默认原始视频所在文件夹 _video_out
             "is_cuda": False,
             "line_roles": {},
             "rephrase": 0,
@@ -545,7 +628,7 @@ class AppParams:
             "baidu_miyue": "",
             "chatgpt_api": "",
             "chatgpt_key": "",
-            "chatgpt_max_token": "8192",
+            "chatgpt_max_token": 8192,
             "chatgpt_model": str(settings.get('chatgpt_model', '-')).strip().split(',')[0],
             "claude_api": "",
             "claude_key": "",
@@ -559,7 +642,7 @@ class AppParams:
             "gemini_maxtoken": 18192,
             "gemini_thinking_budget": 24576,
             "gemini_ttsstyle": "",
-            "gemini_ttsmodel": GEMINI_TTS_MODELS[0],
+            "gemini_ttsmodel": GEMINI_TTS_MODELS.split(',')[0],
             "localllm_api": "",
             "localllm_key": "",
             "localllm_model": str(settings.get('localllm_model', '-')).strip().split(',')[0],
@@ -588,7 +671,7 @@ class AppParams:
             "ai302_key": "",
             "ai302_model": "",
             "ai302_model_recogn": "whisper-1",
-            "whipserx_api": "http://127.0.0.1:9092",
+            "whipserx_api": "",
             "trans_api_url": "",
             "trans_secret": "",
             "coquitts_role": "",
@@ -639,7 +722,7 @@ class AppParams:
             "minimaxi_apikey": "",
             "minimaxi_emotion": "",
             "minimaxi_apiurl": "api.minimaxi.com",
-            "minimaxi_model":MINIMAX_TTS_MODELS[0],
+            "minimaxi_model":MINIMAX_TTS_MODELS.split(',')[0],
             
             "minimax_key":"",
             "minimax_model": MINIMAX_MODELS.split(',')[0],
@@ -676,11 +759,6 @@ class AppParams:
             "voxcpmtts_version": "v2",
             "sparktts_url": "",
             "diatts_url": "",
-            "doubao_appid": "",
-            "doubao_access": "",
-            "volcenginetts_appid": "",
-            "volcenginetts_access": "",
-            "volcenginetts_cluster": "",
             "doubao2_appid": "",
             "doubao2_access": "",
             "zijierecognmodel_appid": "",
@@ -709,7 +787,7 @@ class AppParams:
             "dubb_hecheng_rate": 0,
             "dubb_pitch_rate": 0,
             "dubb_volume_rate": 0,
-            "recogn2pass": True
+            "recogn2pass": False
         }
 
     def _apply_dict(self, data: Dict):
@@ -757,17 +835,14 @@ def tr(lang_key, *kw):
         return lang
 
 
-def push_queue(uuid, jsondata):
+def push_queue(uuid:str, msg:SignMsg):
     """兼容旧的 push_queue"""
     if app_cfg.exit_soft or uuid in app_cfg.stoped_uuid_set:
         return
-    if uuid not in app_cfg.uuid_logs_queue:
-        app_cfg.uuid_logs_queue[uuid] = Queue(maxsize=0)
     try:
-        if isinstance(app_cfg.uuid_logs_queue[uuid], Queue):
-            app_cfg.uuid_logs_queue[uuid].put_nowait(jsondata)
+        SignalHub.instance().post(uuid, msg)
     except Exception as e:
-        logger.exception(f'push_queue错误：{e}', exc_info=True)
+        logger.exception(f'push_queue 信号发送错误：{e}', exc_info=True)
 
 
 def update_logging_level(new_level_str):
@@ -778,43 +853,6 @@ def update_logging_level(new_level_str):
     for handler in _logger.handlers:
         if isinstance(handler, (logging.StreamHandler, logging.FileHandler)):
             handler.setLevel(new_level)
-    print(f"系统日志等级已动态切换为: {new_level_str}")
-
-@lru_cache()
-def __getattr__(name):
-    """
-    实现 config.xxx 的兼容性。
-    查找顺序:
-    1. 当前模块 (已由Python默认处理)
-    2. app_cfg (原全局变量)
-    3. settings (原 settings 字典中的键)
-    4. params (原 params 字典中的键)
-    """
-
-    # 2. 尝试从 settings 获取
-    # 注意：settings 有很多属性，这里利用 getattr 不抛错
-    if name == 'settings':
-        return settings
-    if name == 'params':
-        return params
-    if name.startswith('settings.'):
-        try:
-            return getattr(settings, name)
-        except AttributeError:
-            pass
-    if name.startswith('params.'):
-        # 3. 尝试从 params 获取
-        try:
-            return getattr(params, name)
-        except AttributeError:
-            pass
-
-    # 1. 尝试从 AppCfg 获取 (原全局变量)
-    if hasattr(app_cfg, name):
-        return getattr(app_cfg, name)
-
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
 
 _set_env()
 

@@ -10,8 +10,8 @@ def openwin():
     from PySide6.QtGui import QDesktopServices
     from PySide6.QtWidgets import QFileDialog
 
-    from videotrans.util import contants
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure import contants
+    from videotrans.configure.config import tr,app_cfg,settings,params,TEMP_DIR,logger, HOME_DIR
     from videotrans.util import tools
     RESULT_DIR = HOME_DIR + "/videoandsrt"
 
@@ -77,10 +77,10 @@ def openwin():
                         if self.remain_hr:
                             txt_list = []
                             for txt_line in it['text'].strip().split("\n"):
-                                txt_list.append(tools.textwrap(txt_line.strip(), self.maxlen))
+                                txt_list.append(tools.simple_wrap(txt_line.strip(), self.maxlen,self.language))
                             text += f"{it['line']}\n{it['time']}\n{chr(10).join(txt_list)}\n\n"
                         else:
-                            it['text'] = tools.textwrap(it['text'], self.maxlen).strip()
+                            it['text'] = tools.simple_wrap(it['text'], self.maxlen,self.language).strip()
                             text += f"{it['line']}\n{it['time']}\n{it['text'].strip()}\n\n"
                     srtfile = TEMP_DIR + f"/srt{time.time()}.srt"
                     with Path(srtfile).open('w', encoding='utf-8') as f:
@@ -117,7 +117,7 @@ def openwin():
                     cmd.append(result_file)
                     tools.runffmpeg(cmd,force_cpu=False,cmd_dir=cmd_dir)
                 except Exception as e:
-                    print(e)
+                    logger.exception(e,exc_info=True)
                     self.post(type='error', text=str(e))
                     return
                 finally:
@@ -163,7 +163,7 @@ def openwin():
         maxlen = 30
         try:
             maxlen = int(winobj.maxlen.text())
-        except ValueError:
+        except (TypeError,ValueError):
             pass
 
         winobj.startbtn.setText(

@@ -2,12 +2,12 @@
 def openwin():
     from pathlib import Path
     from PySide6 import QtWidgets
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang
+    from videotrans.configure.config import ROOT_DIR,tr,app_cfg, params,TEMP_DIR
     from videotrans.util import tools
     from videotrans.util.ListenVoice import ListenVoice
     def feed(d):
         if d == "ok":
-            tools.set_process(text='chatterbox', type="refreshtts")
+            tools.set_process(text='', type="refreshtts")
             QtWidgets.QMessageBox.information(winobj, "ok", "Test Ok")
         else:
             tools.show_error(d)
@@ -26,7 +26,7 @@ def openwin():
         _rolename = next(reversed(tools.get_f5tts_role().values()))
         if not isinstance(_rolename,dict):
             return tools.show_error(tr("No reference audio {} exists",_rolename))
-        rolename=_rolename.get('ref_audio')
+        rolename=_rolename.get('ref_wav')
         file=ROOT_DIR+f'/f5-tts/{rolename}'
         if not Path(file).exists():
             return tools.show_error(tr("No reference audio {} exists",file))
@@ -57,7 +57,7 @@ def openwin():
         params["chatterbox_exaggeration"] = min(max(float(winobj.exaggeration.text()), 0.25), 2.0)
 
         params.save()
-        tools.set_process(text='chatterbox', type="refreshtts")
+        tools.set_process(text='', type="refreshtts")
 
         winobj.close()
 

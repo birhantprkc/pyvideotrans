@@ -11,19 +11,18 @@
 *.mp4
 *副本.py
 
+test.py
 .agree.txt
 .git
 .github
 .idea
 .venv
+.pytest_cache
 AGENTS.md
 err.txt
 nolang.txt
 edgetts.txt
 debug*.py
-test*.py
-test*.m*
-test*.json
 ceshi*
 
 
@@ -56,7 +55,6 @@ apidata
 dist
 source
 build
-!tests
 ytlinux
 ytdarwin
 __pycache__

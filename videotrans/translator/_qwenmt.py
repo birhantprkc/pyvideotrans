@@ -1,20 +1,19 @@
+import logging
 import re
 from dataclasses import dataclass
 from typing import List, Union
 import dashscope
-from videotrans.configure.config import tr,settings,params,app_cfg,logger
+from tenacity import retry, retry_if_not_exception_type, wait_fixed, stop_after_attempt, before_log, after_log
+from videotrans.configure.excepts import TranslateSrtError, NO_RETRY_EXCEPT
+from videotrans.configure.config import params, logger, settings
 from videotrans.translator._base import BaseTrans
 from videotrans.util import tools
-
-RETRY_NUMS = 3
-RETRY_DELAY = 5
 
 
 @dataclass
 class QwenMT(BaseTrans):
-    def __post_init__(self):
-        super().__post_init__()
 
+    @retry(retry=retry_if_not_exception_type(NO_RETRY_EXCEPT), stop=(stop_after_attempt(settings.get('retry_nums'))), wait=wait_fixed(2), before=before_log(logger, logging.INFO),after=after_log(logger, logging.INFO))
     def _item_task(self, data: Union[List[str], str]) -> str:
         if self._exit(): return
         text = "\n".join([i.strip() for i in data]) if isinstance(data, list) else data
@@ -22,7 +21,6 @@ class QwenMT(BaseTrans):
         if model_name=='qwen-turbo':
             model_name='qwen-mt-turbo'
         if model_name.startswith('qwen-mt'):
-
             messages = [
                 {
                     "role": "user",
@@ -52,7 +50,9 @@ class QwenMT(BaseTrans):
                 translation_options=translation_options
             )
             if response.code or not response.output:
-                raise RuntimeError(response.message)
+                raise TranslateSrtError(response.message)
+            if not response.output.choices:
+                raise TranslateSrtError(f'qwen-mt returned empty choices')
             logger.debug(f'qwen-mt返回响应:{response.output.choices[0].message.content}')
             return self.clean_srt(response.output.choices[0].message.content)
 
@@ -63,7 +63,7 @@ class QwenMT(BaseTrans):
                 'content':'You are a top-tier Subtitle Translation Engine.'},
             {
                 'role': 'user',
-                'content': self.prompt.replace('{batch_input}', f'{text}').replace('{context_block}',self.full_origin_subtitles)
+                'content': self.prompt.replace('{batch_input}', f'{text}')
                 },
         ]
         response = dashscope.Generation.call(
@@ -76,12 +76,16 @@ class QwenMT(BaseTrans):
         )
 
         if response.code or not response.output:
-            raise RuntimeError(response.message)
+            raise TranslateSrtError(response.message)
+        if not response.output.choices:
+            raise TranslateSrtError(f'qwen-mt returned empty choices')
         logger.debug(f'阿里百炼 AI响应:{response.output.choices[0].message.content}')
-        match = re.search(r'<TRANSLATE_TEXT>(.*?)</TRANSLATE_TEXT>', response.output.choices[0].message.content, re.S)
+        # match = re.search(r'<TRANSLATE_TEXT>(.*?)</TRANSLATE_TEXT>', response.output.choices[0].message.content, re.S)
+        result = response.output.choices[0].message.content
+        match = re.search(r'<TRANSLATE_TEXT>(.*?)</TRANSLATE_TEXT>', result, re.S)
         if match:
             return match.group(1)
-        return ''
+        return result.strip()
 
 
 
@@ -92,7 +96,7 @@ class QwenMT(BaseTrans):
         srt = re.sub(r'([：:])\s*', ':', srt,flags=re.I | re.S)
         # ,， 换成 ,
         srt = re.sub(r'([,，])\s*', ',', srt,flags=re.I | re.S)
-        srt = re.sub(r'([`’\'\"])\s*', '', srt,flags=re.I | re.S)
+        srt = re.sub(r'([`’\"])\s*', '', srt,flags=re.I | re.S)
 
         # 秒和毫秒间的.换成,
         srt = re.sub(r'(:\d+)\.\s*?(\d+)', r'\1,\2', srt,flags=re.I | re.S)
@@ -100,8 +104,9 @@ class QwenMT(BaseTrans):
         time_line = r'(\s?\d+:\d+:\d+(?:,\d+)?)\s*?-->\s*?(\d+:\d+:\d+(?:,\d+)?\s?)'
         srt = re.sub(time_line, r"\n\1 --> \2\n", srt,flags=re.I | re.S)
         # twenty one\n00:01:18,560 --> 00:01:22,000\n
-        srt = re.sub(r'\s?[a-zA-Z ]{3,}\s*?\n?(\d{2}:\d{2}:\d{2}\,\d{3}\s*?\-\->\s*?\d{2}:\d{2}:\d{2}\,\d{3})\s?\n?',
-                     "\n" + r'1\n\1\n', srt,flags=re.I | re.S)
+        #srt = re.sub(r'\s?[a-zA-Z ]{3,}\s*?\n?(\d{2}:\d{2}:\d{2},\d{3}\s*?-->\s*?\d{2}:\d{2}:\d{2},\d{3})\s?\n?',
+        # "\n" + r'1\n\1\n', srt,flags=re.I | re.S)
+        srt = re.sub(r'\s?([a-zA-Z ]{3,})\s*?\n?(\d{2}:\d{2}:\d{2}\,\d{3}\s*?\-\->\s*?\d{2}:\d{2}:\d{2}\,\d{3})\s?\n?', r'\n1\n\2\n\1', srt,flags=re.I | re.S)
         # 去除多余的空行
         srt = "\n".join([it.strip() for it in srt.splitlines() if it.strip()])
 
@@ -123,4 +128,5 @@ class QwenMT(BaseTrans):
 
         # 行号前添加换行符
         srt = re.sub(r'\s?(\d+)\s+?(\d+:\d+:\d+)', r"\n\n\1\n\2", srt,flags=re.I | re.S)
-        return srt.strip().replace('&#39;', '"').replace('&quot;', "'")
+        # return srt.strip().replace('&#39;', '"').replace('&quot;', "'")
+        return srt.strip().replace('&#39;', "'").replace('&quot;', '"')

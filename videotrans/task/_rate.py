@@ -77,15 +77,19 @@ import numpy as np  # 新增 numpy 用于声道处理
 from pydub import AudioSegment
 
 # 尝试导入 pyrubberband
+from videotrans.configure.contants import INSTALL_RUBBERBAND_TIPS
+
 try:
     import pyrubberband as pyrb
     HAS_RUBBERBAND = True
 except ImportError:
     HAS_RUBBERBAND = False
 
-from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang
+
+from videotrans.configure.config import ROOT_DIR,tr, settings, TEMP_DIR,logger
 from videotrans.process.signelobj import GlobalProcessManager
 from videotrans.util import tools
+
 
 
 def _cut_video_get_duration(i, task, novoice_mp4_original, preset, crf):
@@ -192,7 +196,7 @@ def _cut_video_get_duration(i, task, novoice_mp4_original, preset, crf):
         try:
             if Path(task['filename']).exists():
                 Path(task['filename']).unlink()
-        except:
+        except OSError:
             pass
             
     return task
@@ -202,10 +206,6 @@ def _change_speed_rubberband(input_path, target_duration):
     """
     使用 Rubber Band 进行音频变速
     """
-    if not HAS_RUBBERBAND:
-        logger.warning(f"[Audio-RB] Rubberband 未安装，跳过: {input_path}")
-        return
-
     try:
         y, sr = sf.read(input_path)
         if len(y) == 0:
@@ -216,10 +216,6 @@ def _change_speed_rubberband(input_path, target_duration):
         
         if target_duration <= 0: target_duration = 1
         
-        # 【逻辑优化】如果目标时长比当前还长，说明需要音频慢放。
-        # 但在当前的对齐策略中，音频通常只压缩（加速）。
-        # 如果确实发生了 target > current，通常意味着我们应该填充静音而不是拉伸音频。
-        # 这里为了安全，如果差异过大，不做处理。
         if target_duration > current_duration:
              # 允许微小的误差，或者由后续静音填充处理
              logger.debug(f"[Audio-RB] 目标时长({target_duration}) > 当前时长({current_duration})，跳过变速，交由静音填充。")
@@ -234,7 +230,6 @@ def _change_speed_rubberband(input_path, target_duration):
 
         y_stretched = pyrb.time_stretch(y, sr, time_stretch_rate)
         
-        # 【关键修正】确保输出是 Stereo (2通道)，防止后续 ffmpeg concat 报错
         # 如果是单声道 (ndim=1)，复制为双声道
         if y_stretched.ndim == 1:
             y_stretched = np.column_stack((y_stretched, y_stretched))
@@ -245,6 +240,47 @@ def _change_speed_rubberband(input_path, target_duration):
         logger.error(f"[Audio-RB] 音频处理失败 {input_path}: {e}")
 
 
+def _precise_speed_up_audio(input_path=None,  target_duration=None):
+    audio = AudioSegment.from_file(input_path, format='wav')
+    current_duration_ms = len(audio)
+
+    # 完成使用 atempo 滤镜加速
+    # 构造 atempo 滤镜链
+    # atempo 限制：参数必须在 [0.5, 2.0] 之间
+    atempo_list = []
+    speed_factor = current_duration_ms / target_duration
+
+    # 处理加速情况 (> 2.0)
+    while speed_factor > 2.0:
+        atempo_list.append("atempo=2.0")
+        speed_factor /= 2.0
+
+    # 放入剩余的倍率
+    atempo_list.append(f"atempo={speed_factor}")
+
+    # 用逗号连接滤镜，形成串联效果，如 "atempo=2.0,atempo=1.5"
+    filter_str = ",".join(atempo_list)
+
+    cmd = [
+        '-y',
+        '-i',
+        input_path,
+        '-filter:a',
+        filter_str,
+        '-t', f"{target_duration/1000.0}",  # 强制裁剪到目标时长，防止精度误差
+        '-ar', "48000",
+        '-ac', "2",
+        '-c:a', 'pcm_s16le',
+        f'{input_path}-after.wav'
+    ]
+    try:
+        tools.runffmpeg(cmd)
+        shutil.copy2(f'{input_path}-after.wav',input_path)
+    except Exception as e:
+        logger.exception(f'音频加速失败:{e}')
+
+
+
 class SpeedRate:
     MIN_CLIP_DURATION_MS = 40
     AUDIO_SAMPLE_RATE = 48000
@@ -253,8 +289,8 @@ class SpeedRate:
     def __init__(self,
                  *,
                  queue_tts=None,
-                 shoud_videorate=False,
-                 shoud_audiorate=False,
+                 should_videorate=False,
+                 should_audiorate=False,
                  uuid=None,
                  novoice_mp4=None,
                  raw_total_time=0,
@@ -268,8 +304,8 @@ class SpeedRate:
         self.remove_silent_mid = remove_silent_mid
         self.queue_tts = queue_tts
         self.len_queue = len(queue_tts)
-        self.shoud_videorate = shoud_videorate
-        self.shoud_audiorate = shoud_audiorate
+        self.should_videorate = should_videorate
+        self.should_audiorate = should_audiorate
         self.uuid = uuid
         self.novoice_mp4_original = novoice_mp4
         self.novoice_mp4 = novoice_mp4
@@ -297,14 +333,18 @@ class SpeedRate:
                 preset_tmp = str(Path(ROOT_DIR + "/preset.txt").read_text().strip())
                 if preset_tmp in ['ultrafast', 'veryfast', 'medium', 'slow']:
                     self.preset = preset_tmp
-        except:
+        except Exception:
             pass
 
         self.audio_speed_rubberband = shutil.which("rubberband")
-        logger.debug(f"[SpeedRate] Init. AudioRate={self.shoud_audiorate}, VideoRate={self.shoud_videorate}, Rubberband={bool(self.audio_speed_rubberband)}")
+        logger.debug(f"[SpeedRate] Init. AudioRate={self.should_audiorate}, VideoRate={self.should_videorate}, Rubberband={bool(self.audio_speed_rubberband)}")
+        if not HAS_RUBBERBAND or not self.audio_speed_rubberband:
+            logger.warning(f"[SpeedRate] Rubberband 不可用，将使用pydub+ffmpeg处理音频加速。\n建议安装，加速效果更佳\n{INSTALL_RUBBERBAND_TIPS}")
 
     def run(self):
-        if not self.shoud_audiorate and not self.shoud_videorate:
+        if not self.queue_tts:
+            return []
+        if not self.should_audiorate and not self.should_videorate:
             logger.debug("[SpeedRate] 未启用变速，进入普通拼接模式。")
             self._run_no_rate_change_mode()
             return self.queue_tts
@@ -320,13 +360,10 @@ class SpeedRate:
         # 3. 音频变速
         if self.audio_data:
             tools.set_process(text='Processing audio speed...', uuid=self.uuid)
-            if HAS_RUBBERBAND and self.audio_speed_rubberband:
-                self._execute_audio_speedup_rubberband()
-            else:
-                 logger.warning("[SpeedRate] Rubberband 不可用，跳过音频物理变速。")
-        
+            self._execute_audio_speedup_rubberband()
+
         # 4. 视频变速
-        if self.shoud_videorate and self.video_for_clips:
+        if self.should_videorate and self.video_for_clips:
             tools.set_process(text='Processing video speed...', uuid=self.uuid)
             processed_video_clips = self._video_speeddown()
             
@@ -347,7 +384,8 @@ class SpeedRate:
                 try:
                     self.raw_total_time = tools.get_video_duration(self.novoice_mp4)
                     logger.debug(f"[SpeedRate] 新视频生成完毕，总时长: {self.raw_total_time}ms")
-                except: pass
+                except Exception:
+                    pass
         else:
             # 不变视频，时长为原槽位时长
             for it in self.queue_tts:
@@ -372,7 +410,7 @@ class SpeedRate:
             # 字幕开始点，用于切分 视频 和 变速
             current['start_time_source']=current['start_time']
             # 有视频慢速并且小于100ms，置为 从0开始，防止短视频片段出错
-            if self.shoud_videorate and i == 0 and current['start_time']<100:
+            if self.should_videorate and i == 0 and current['start_time']<100:
                 current['start_time_source'] = 0
             
             # 填补空隙，将字幕结束时间变为下个开始时间，增大变速区间，以减小变速幅度
@@ -402,7 +440,7 @@ class SpeedRate:
         """计算策略"""
         tools.set_process(text="Calculating sync adjustments...", uuid=self.uuid)
         # 视频慢速，第0条字幕之前可能有无声音视频
-        if self.shoud_videorate and self.queue_tts[0]['start_time_source']>0:
+        if self.should_videorate and self.queue_tts[0]['start_time_source']>0:
             self.video_for_clips.append({
                     "start": 0,
                     "end": self.queue_tts[0]['start_time_source'],
@@ -417,7 +455,7 @@ class SpeedRate:
             source_dur = it['source_duration']
             dubb_dur = it['dubb_time']
             
-            if self.shoud_videorate and source_dur <= 0:
+            if self.should_videorate and source_dur <= 0:
                 logger.warning(f"[Calc] 字幕[{it['line']}] 视频槽位<=0，跳过")
                 self.video_for_clips.append({
                     "start": 0, 
@@ -435,7 +473,7 @@ class SpeedRate:
             
             mode_log = ""
             # 仅音频加速
-            if self.shoud_audiorate and not self.shoud_videorate:
+            if self.should_audiorate and not self.should_videorate:
                 mode_log = "Only Audio"
                 if dubb_dur > source_dur:
                     ratio = dubb_dur / source_dur
@@ -444,7 +482,7 @@ class SpeedRate:
                     else:
                         audio_target = source_dur
 
-            elif not self.shoud_audiorate and self.shoud_videorate:
+            elif not self.should_audiorate and self.should_videorate:
                 mode_log = "Only Video"
                 if dubb_dur > source_dur:
                     video_target = dubb_dur
@@ -452,7 +490,7 @@ class SpeedRate:
                     if pts > self.max_video_pts_rate:
                         video_target = int(source_dur * self.max_video_pts_rate)
 
-            elif self.shoud_audiorate and self.shoud_videorate:
+            elif self.should_audiorate and self.should_videorate:
                 mode_log = "Both"
                 if dubb_dur > source_dur:
                     ratio = dubb_dur / source_dur
@@ -468,14 +506,14 @@ class SpeedRate:
 
 
             # 注册任务
-            if self.shoud_audiorate and audio_target < dubb_dur:
+            if self.should_audiorate and audio_target < dubb_dur:
                 self.audio_data.append({
                     "filename": it['filename'],
                     "dubb_time": dubb_dur,
                     "target_time": audio_target
                 })
             
-            if self.shoud_videorate:
+            if self.should_videorate:
                 pts = video_target / source_dur if source_dur > 0 else 1.0
                 self.video_for_clips.append({
                     "start": it['start_time_source'],
@@ -496,13 +534,16 @@ class SpeedRate:
         all_task = []
         for d in self.audio_data:
             all_task.append(GlobalProcessManager.submit_task_cpu(
-                _change_speed_rubberband, 
+                _change_speed_rubberband if HAS_RUBBERBAND and self.audio_speed_rubberband else _precise_speed_up_audio,
                 input_path=d['filename'], 
                 target_duration=d['target_time']
             ))
-        for task in all_task:
-            try: task.result()
-            except: pass
+        for i,task in enumerate(all_task):
+            try:
+                tools.set_process(text=f'audio speedup {i}/{len(all_task)}',uuid=self.uuid)
+                task.result()
+            except Exception:
+                pass
 
     def _video_speeddown(self):
         data = []
@@ -524,8 +565,9 @@ class SpeedRate:
             all_task.append(GlobalProcessManager.submit_task_cpu(_cut_video_get_duration, **kw))
 
         processed_clips = []
-        for task in all_task:
+        for i,task in enumerate(all_task):
             try:
+                tools.set_process(text=f'video speed down {i}/{len(all_task)}',uuid=self.uuid)
                 res = task.result()
                 if res: processed_clips.append(res)
             except Exception as e:
@@ -576,8 +618,8 @@ class SpeedRate:
                     try:
                         os.remove(entry.path)
                         deleted_count += 1
-                    except Exception as e:
-                        print(f"无法删除文件 {entry.name}: {e}")
+                    except OSError as e:
+                        logger.exception(f"无法删除文件 {entry.name}: {e}",exc_info=True)
 
         logger.debug(f"清理视频慢速中生成的视频片段，共删除了 {deleted_count} 个文件。")
 
@@ -622,7 +664,7 @@ class SpeedRate:
                 
                 try:
                     # 有视频慢速时强制阶段音频
-                    if self.shoud_videorate:
+                    if self.should_videorate:
                         cut_seg = AudioSegment.from_file(audio_file)[:slot_duration]
                         final_slot_path = Path(self.cache_folder, f"final_slot_cut_{i}.wav").as_posix()
                         cut_seg.export(final_slot_path, format='wav')
@@ -721,12 +763,12 @@ class SpeedRate:
 class TtsSpeedRate(SpeedRate):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.shoud_videorate=False
+        self.should_videorate=False
         self.max_audio_speed_rate=100
 
 
     def run(self):
-        if not self.shoud_audiorate:
+        if not self.should_audiorate:
             logger.debug("[SpeedRate] 未启用变速，进入普通拼接模式。")
             self._run_no_rate_change_mode()
             return self.queue_tts
@@ -744,10 +786,8 @@ class TtsSpeedRate(SpeedRate):
         # 3. 音频变速
         if self.audio_data:
             tools.set_process(text='Processing audio speed...', uuid=self.uuid)
-            if HAS_RUBBERBAND and self.audio_speed_rubberband:
-                self._execute_audio_speedup_rubberband()
-            else:
-                 logger.warning("[SpeedRate] Rubberband 不可用，跳过音频物理变速。")
+            self._execute_audio_speedup_rubberband()
+
 
         tools.set_process(text='Concatenating final audio...', uuid=self.uuid)
         self._concat_audio_aligned()
@@ -804,7 +844,6 @@ class TtsSpeedRate(SpeedRate):
         logger.debug("[Audio] 开始对齐拼接...")
 
         audio_concat_list = []
-        total_audio_duration = 0
 
         # 恢复原始时间轴
         for i, it in enumerate(self.queue_tts):

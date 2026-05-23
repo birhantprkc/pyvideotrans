@@ -10,8 +10,8 @@ def openwin():
     from PySide6.QtCore import QThread, Signal, QUrl,QTimer
     from PySide6.QtGui import QDesktopServices
     from PySide6.QtWidgets import QFileDialog
-    from videotrans.util import contants
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure import contants
+    from videotrans.configure.config import tr,app_cfg,settings,params,TEMP_DIR, HOME_DIR
     # 使用内置的 open 函数
     from videotrans.util import tools
     RESULT_DIR = HOME_DIR + "/watermark"
@@ -109,7 +109,7 @@ def openwin():
                 try:
                     tools.runffmpeg(ffmpeg_command,force_cpu=False)
                 except Exception as e:
-                    from videotrans.configure._except import get_msg_from_except
+                    from videotrans.configure.excepts import get_msg_from_except
                     self.post(type='error', text=get_msg_from_except(e))
                 finally:
                     self.percent += self.every_percent
@@ -169,17 +169,17 @@ def openwin():
         x, y = 10, 10
         try:
             x = int(winobj.linex.text())
-        except ValueError:
+        except (TypeError,ValueError):
             pass
         try:
             y = int(winobj.liney.text())
-        except ValueError:
+        except (TypeError,ValueError):
             pass
         w, h = 50, 50
         try:
             tmp_w = winobj.linew.text().strip().split('x')
             w, h = int(tmp_w[0]), int(tmp_w[1])
-        except (ValueError,AttributeError):
+        except (ValueError,AttributeError,IndexError,TypeError):
             pass
 
         task = CompThread(parent=winobj, png=png, x=max(x, 0), y=max(y, 0),
@@ -193,7 +193,7 @@ def openwin():
 
     from videotrans.component.set_form import WatermarkForm
     winobj = WatermarkForm()
-    app_cfg.child_forms['fn_watermak'] = winobj
+    app_cfg.child_forms['fn_watermark'] = winobj
     winobj.show()
     def _bind():
         Path(RESULT_DIR).mkdir(parents=True,exist_ok=True)

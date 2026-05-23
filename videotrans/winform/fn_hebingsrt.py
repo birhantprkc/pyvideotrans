@@ -6,7 +6,7 @@ def openwin():
     from PySide6.QtCore import QThread, Signal, QUrl,QTimer
     from PySide6.QtGui import QDesktopServices
     from PySide6.QtWidgets import QFileDialog
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure.config import tr,app_cfg, params, HOME_DIR
     from videotrans.util import tools
     RESULT_DIR = HOME_DIR + "/Mergersrt"
 
@@ -39,7 +39,7 @@ def openwin():
                     f.flush()
                 self.post(type='ok', text=self.result_file)
             except Exception as e:
-                from videotrans.configure._except import get_msg_from_except
+                from videotrans.configure.excepts import get_msg_from_except
                 self.post(type='error', text=get_msg_from_except(e))
 
     def feed(d):
@@ -57,7 +57,7 @@ def openwin():
             winobj.startbtn.setDisabled(False)
             winobj.resultlabel.setText(d['text'])
             winobj.resultbtn.setDisabled(False)
-            winobj.resultinput.setPlainText(Path(winobj.resultlabel.text()).read_text(encoding='utf-8'))
+            winobj.resultinput.setPlainText(Path(winobj.resultlabel.text()).read_text(encoding='utf-8-sig'))
 
     def get_file(inputname):
         fname, _ = QFileDialog.getOpenFileName(winobj, "Select subtitles srt", params.get('last_opendir',''),

@@ -5,7 +5,7 @@ def openwin():
     from PySide6 import QtWidgets
     from videotrans import translator
 
-    from videotrans.configure.config import tr,params,settings,app_cfg,logger
+    from videotrans.configure.config import tr,params,settings,app_cfg
     from videotrans.util import tools
 
     from videotrans.util.TestSrtTrans import TestSrtTrans
@@ -34,11 +34,9 @@ def openwin():
         key = winobj.ai302_key.text()
         model = winobj.ai302_model.currentText()
         model_recogn = winobj.ai302_model_recogn.currentText()
-
         params["ai302_key"] = key
         params["ai302_model"] = model
         params["ai302_model_recogn"] = model_recogn
-
         params.save()
         winobj.close()
 

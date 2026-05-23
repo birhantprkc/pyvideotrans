@@ -1,14 +1,17 @@
-import time
-from dataclasses import dataclass
-from pathlib import Path
-from typing import List, Dict, Union
-
-from videotrans.configure.config import ROOT_DIR, logger, settings, TEMP_DIR, defaulelang
-from videotrans.process import faster_whisper, pipe_asr
-from videotrans.util import tools
-from videotrans.recognition._base import BaseRecogn
-from pydub import AudioSegment
 import json
+import time
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import List, Union
+
+from pydub import AudioSegment
+
+from videotrans.configure.config import ROOT_DIR, logger, settings, TEMP_DIR
+from videotrans.configure.excepts import SpeechToTextError
+from videotrans.process import faster_whisper, pipe_asr
+from videotrans.recognition._base import BaseRecogn
+from videotrans.task.taskcfg import SrtItem
+from videotrans.util import tools
 
 
 @dataclass
@@ -17,15 +20,15 @@ class HuggingfaceRecogn(BaseRecogn):
     def __post_init__(self):
         super().__post_init__()
         self.local_dir = f'{ROOT_DIR}/models/models--' + self.model_name.replace('/', '--')
-        self._signal(text=f"use {self.model_name}")
+        self.signal(text=f"use {self.model_name}")
         self.audio_duration=len(AudioSegment.from_wav(self.audio_file))
 
     def _download(self):
         tools.check_and_down_hf(self.model_name,self.model_name,self.local_dir,callback=self._process_callback)
 
-    def _exec(self) -> Union[List[Dict], None]:
+    def _exec(self) -> Union[List[SrtItem], None]:
         if self._exit(): return
-        self._signal(text=f"loading {self.model_name}")
+        self.signal(text=f"loading {self.model_name}")
         logger.debug(f'[HuggingfaceRecogn]_exec:{self.model_name=}')
 
         if self.model_name in ['JhonVanced/whisper-large-v3-japanese-4k-steps-ct2',
@@ -38,16 +41,15 @@ class HuggingfaceRecogn(BaseRecogn):
             result = self._pipe_asr()
         if result:
             return result
-        raise RuntimeError(f'No recognition results found:{self.model_name}')
+        raise SpeechToTextError(f'No recognition results found:{self.model_name}')
 
-    def _pipe_asr(self):
+    def _pipe_asr(self)->Union[List[SrtItem], None]:
         # 1. 准备数据
-
         title=f"load {self.model_name}"
-        self._signal(text=title)
+        self.signal(text=title)
         logs_file = f'{TEMP_DIR}/{self.uuid}/huggingface-pipeasr-{self.detect_language}-{time.time()}.log'
         cut_audio_list_file = f'{TEMP_DIR}/{self.uuid}/cut_audio_list_{time.time()}.json'
-        Path(cut_audio_list_file).write_text(json.dumps(self.cut_audio()),encoding='utf-8')
+        Path(cut_audio_list_file).write_text(json.dumps([ asdict(item) for item in self.cut_audio()]),encoding='utf-8')
         kwargs = {
             "cut_audio_list": cut_audio_list_file,
             "prompt": settings.get(
@@ -64,9 +66,9 @@ class HuggingfaceRecogn(BaseRecogn):
         return raws
 
     # JhonVanced/whisper-large-v3-japanese-4k-steps-ct2','zh-plus/faster-whisper-large-v2-japanese-5k-steps
-    def _faster(self):
+    def _faster(self)->Union[List[SrtItem], None]:
         title=f"load {self.model_name}"
-        self._signal(text=title)
+        self.signal(text=title)
         logs_file = f'{TEMP_DIR}/{self.uuid}/huggingface-faster-{self.detect_language}-{time.time()}.log'
         speech_timestamps_file=None
         if self.speech_timestamps:

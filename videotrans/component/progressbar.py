@@ -5,7 +5,7 @@ from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QLabel, QProgressBar, QHBoxLayout
 
-from videotrans.configure.config import tr,app_cfg,settings,params,logger
+from videotrans.configure.config import tr
 from videotrans.util import tools
 
 
@@ -84,7 +84,7 @@ class ClickableProgressBar(QLabel):
         self.ended = True
         self.progress_bar.setToolTip(
             tr("Click to view the detailed error report"))
-        self.progress_bar.setFormat(f'  [{self.precent}%]  {text[:90]}   {self.basename}')
+        self.progress_bar.setFormat(f'  [{self.precent}%]  {text[:90].strip()}   {self.basename}')
 
     # 设置按钮显示文字，如果已结束，则不设置，直接返回
     # 进度 set_precent 后将仅传进来时间，此时使用上次保留的msg消息

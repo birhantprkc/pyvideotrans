@@ -4,8 +4,8 @@ import time
 from pathlib import Path
 import shutil, os, requests
 import zipfile
-from videotrans.configure.config import ROOT_DIR, tr, app_cfg, settings, params, TEMP_DIR, logger, defaulelang, HOME_DIR
-from videotrans.util.contants import FASTER_MODELS_DICT
+from videotrans.configure.config import ROOT_DIR, tr, logger, defaulelang
+from videotrans.configure.contants import FASTER_MODELS_DICT
 from .help_misc import create_tqdm_class
 from urllib.parse import urlparse
 
@@ -31,10 +31,10 @@ def is_connect_hf():
     try:
         requests.head('https://huggingface.co', timeout=3)
     except Exception as e:
-        print(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com\n{e}')
+        logger.warning(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com\n{e}')
         return False
     else:
-        print('可以使用 huggingface.co')
+        logger.info('可以使用 huggingface.co')
         return True
 
 
@@ -73,10 +73,10 @@ def check_and_down_hf(model_id, repo_id, local_dir, callback=None) -> bool:
                 MyTqdmClass = create_tqdm_class(callback)
 
             if is_connect_hf() is False:
-                print(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com, {model_id=}')
+                logger.warning(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com, {model_id=}')
                 endpoint = 'https://hf-mirror.com'
             else:
-                print('可以使用 huggingface.co')
+                logger.info('可以使用 huggingface.co')
                 endpoint = 'https://huggingface.co'
 
             huggingface_hub.snapshot_download(
@@ -112,19 +112,18 @@ def check_and_down_hf(model_id, repo_id, local_dir, callback=None) -> bool:
                         shutil.rmtree(full_path)
                     else:
                         os.remove(full_path)
-                    print(f"clear cache: {junk}")
-                except Exception as e:
-                    print(f"{junk} {e}")
+                except OSError as e:
+                    logger.exception(f"清理临时文件失败：{junk} {e}",exc_info=True)
     return True
 
 
 # 从 huggingface 下载单个文件
 def down_file_from_hf(local_dir, urls=None, callback=None) -> bool:
     if is_connect_hf() is False:
-        print(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com')
+        logger.warning(f'无法连接 huggingface.co, 使用镜像替换: hf-mirror.com')
         endpoint = 'https://hf-mirror.com'
     else:
-        print('可以使用 huggingface.co')
+        logger.info('可以使用 huggingface.co')
         endpoint = 'https://huggingface.co'
     for index, url in enumerate(urls):
         try:
@@ -169,34 +168,31 @@ def down_file_from_ms(local_dir, urls=None, callback=None) -> bool:
         file_abso_path = f'{local_dir}/{filename}'
         if Path(file_abso_path).exists():
             continue
-        try:
-            with requests.get(url, stream=True, timeout=(30, 600)) as response:
-                response.raise_for_status()
-                total_length = response.headers.get('content-length')
-                dest_file_obj = open(file_abso_path, 'wb')
-                try:
-                    if total_length is None:
-                        dest_file_obj.write(response.content)
-                    else:
-                        total_length = max(int(total_length), 1)
-                        downloaded = 0
-                        last_send = time.time()
-                        for chunk in response.iter_content(chunk_size=1024 * 1024):
-                            if chunk:
-                                dest_file_obj.write(chunk)
-                                downloaded += len(chunk)
-                                file_percent = min((downloaded / total_length) * 100, 100)
-                                if time.time() - last_send > 3:
-                                    last_send = time.time()
-                                if callback:
-                                    callback(
-                                        {"type": "file", "percent": file_percent, "filename": f"{filename}",
-                                         "current": index + 1, "total": 5})
+        with requests.get(url, stream=True, timeout=(30, 600)) as response:
+            response.raise_for_status()
+            total_length = response.headers.get('content-length')
+            dest_file_obj = open(file_abso_path, 'wb')
+            try:
+                if total_length is None:
+                    dest_file_obj.write(response.content)
+                else:
+                    total_length = max(int(total_length), 1)
+                    downloaded = 0
+                    last_send = time.time()
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            dest_file_obj.write(chunk)
+                            downloaded += len(chunk)
+                            file_percent = min((downloaded / total_length) * 100, 100)
+                            if time.time() - last_send > 3:
+                                last_send = time.time()
+                            if callback:
+                                callback(
+                                    {"type": "file", "percent": file_percent, "filename": f"{filename}",
+                                     "current": index + 1, "total": 5})
 
-                finally:
-                    dest_file_obj.close()
-        except Exception as e:
-            raise
+            finally:
+                dest_file_obj.close()
     return True
 
 
@@ -210,31 +206,31 @@ def down_zip(local_dir, zip_url, callback=None) -> bool:
 
             # 决定写入目标：如果是需要解压的，写入临时文件；否则直接写入目标文件
             dest_file_obj = tempfile.TemporaryFile()  # 内存/临时磁盘，自动删除
+            try:
+                if total_length is None:
+                    dest_file_obj.write(response.content)
+                else:
+                    total_length = max(int(total_length), 1)
+                    downloaded = 0
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            dest_file_obj.write(chunk)
+                            downloaded += len(chunk)
 
-            if total_length is None:
-                dest_file_obj.write(response.content)
-            else:
-                total_length = max(int(total_length), 1)
-                downloaded = 0
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        dest_file_obj.write(chunk)
-                        downloaded += len(chunk)
-
-                        # 计算进度
-                        # 单文件进度 0-100
-                        file_percent = min(99.0, downloaded * 100 / total_length)
-                        if callback:
-                            callback(f'{tr("Download Models")} {filename} {file_percent:.2f}%')
-
-            if callback:
-                callback(f'Extracting zip...')
-            dest_file_obj.seek(0)  # 回到文件头
-            with zipfile.ZipFile(dest_file_obj) as zf:
-                zf.extractall(path=local_dir)
-            if callback:
-                callback('Downloaded end')
-            dest_file_obj.close()
+                            # 计算进度
+                            # 单文件进度 0-100
+                            file_percent = min(99.0, downloaded * 100 / total_length)
+                            if callback:
+                                callback(f'{tr("Download Models")} {filename} {file_percent:.2f}%')
+                if callback:
+                    callback(f'Extracting zip...')
+                dest_file_obj.seek(0)  # 回到文件头
+                with zipfile.ZipFile(dest_file_obj) as zf:
+                    zf.extractall(path=local_dir)
+                if callback:
+                    callback('Downloaded end')
+            finally:
+                dest_file_obj.close()
     except Exception as e:
         msg = tr('model is missing. Please download it', local_dir)
         if callback:
@@ -245,7 +241,7 @@ def down_zip(local_dir, zip_url, callback=None) -> bool:
 
 # 从 modelscope.cn 下载完整模型
 def check_and_down_ms(model_id, callback=None, local_dir=None) -> bool:
-    from modelscope.hub.callback import ProgressCallback, TqdmCallback
+    from modelscope.hub.callback import TqdmCallback
     from modelscope.hub.snapshot_download import snapshot_download
     class Pro(TqdmCallback):
         def __init__(self, *args):
@@ -255,16 +251,10 @@ def check_and_down_ms(model_id, callback=None, local_dir=None) -> bool:
             super().update(size)
             try:
                 _str = str(self.progress).split('%')[0] + '%'
-                callback(_str)
-            except:
+                if callback:
+                    callback(_str)
+            except Exception:
                 pass
-            '''
-            if callback:
-                per=f'{size*100/self.file_size:.2f}%' if self.file_size>0 else ''
-                callback(f'{self.filename} {per}')
-            else:
-                print(f'{self.filename=},{self.file_size=},{size=}')
-            '''
 
     try:
         try:
@@ -272,7 +262,7 @@ def check_and_down_ms(model_id, callback=None, local_dir=None) -> bool:
             snapshot_download(model_id=model_id, local_files_only=True, progress_callbacks=[Pro], local_dir=local_dir)
             if callback:
                 callback(f'{model_id} exists')
-        except ValueError  as e:
+        except ValueError:
             if callback:
                 callback(f'{model_id}')
             snapshot_download(model_id=model_id, progress_callbacks=[Pro], local_dir=local_dir, max_workers=1)

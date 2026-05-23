@@ -1,6 +1,6 @@
 def openwin():
     from PySide6 import QtWidgets
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang
+    from videotrans.configure.config import tr,app_cfg,settings,params,TEMP_DIR
     from videotrans.util import tools
     from videotrans.util.ListenVoice import ListenVoice
     def feed(d):
@@ -37,7 +37,7 @@ def openwin():
         settings['chattts_voice'] = voice
         settings.save()
 
-        tools.set_process(text='chattts', type="refreshtts")
+        tools.set_process(text='', type="refreshtts")
         winobj.close()
 
     from videotrans.component.set_form import ChatttsForm

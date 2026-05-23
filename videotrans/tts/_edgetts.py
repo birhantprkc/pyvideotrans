@@ -1,15 +1,17 @@
 import asyncio
+import functools
 import os
 from dataclasses import dataclass
 from pathlib import Path
-import functools
-import aiohttp
 
-from videotrans.util import tools
+import aiohttp
 from edge_tts import Communicate
 from edge_tts.exceptions import NoAudioReceived
-from videotrans.configure.config import tr, params, settings, app_cfg, logger, ROOT_DIR
+
+from videotrans.configure.config import tr, settings, app_cfg, logger, ROOT_DIR
+from videotrans.configure.excepts import DubbingSrtError
 from videotrans.tts._base import BaseTTS
+from videotrans.util import tools
 
 # edge-tts 限流，可能产生大量超时、401等错误
 
@@ -40,7 +42,7 @@ class EdgeTTS(BaseTTS):
     async def _create_audio_with_retry(self, item, index, total_tasks, semaphore):
         # 根据角色名获取真实 配音所需的角色
         task_id = f" [{index + 1}/{total_tasks}]"
-        if not item.get('text','').strip() or tools.vail_file(item['filename']):
+        if self._exit() or not item.get('text','').strip() or tools.vail_file(item['filename']):
             await self.increment_counter()
             return
         
@@ -72,7 +74,7 @@ class EdgeTTS(BaseTTS):
                         if self._stop_event.is_set(): return
                         loop = asyncio.get_running_loop()
                         signal_with_args = functools.partial(
-                            self._signal, 
+                            self.signal, 
                             text=f'{tr("kaishipeiyin")} {msg}[{self.ends_counter + 1}/{total_tasks}]'
                         )
                         
@@ -87,7 +89,6 @@ class EdgeTTS(BaseTTS):
                         return
 
                     except asyncio.TimeoutError as e:
-                        #print(f'{e}')
                         if attempt < RETRY_NUMS:
                             await asyncio.sleep(RETRY_DELAY)
                         else:
@@ -96,7 +97,6 @@ class EdgeTTS(BaseTTS):
                             # 失败也是一种完成，直接返回
                             return
                     except (NoAudioReceived, aiohttp.ClientError) as e:
-                        #print(f'{e}')
                         self.error=e if not self.useproxy else f'proxy={self.useproxy}, {tr("Please turn off the clear proxy and try again")}:{e}'
                         # 强制禁用代理重试
                         self.useproxy=None
@@ -132,10 +132,6 @@ class EdgeTTS(BaseTTS):
             self._stop_event.set()
     
     async def _exec(self) -> None:
-
-        if not self.queue_tts:
-            return
-        
         logger.debug(f'本次EdgeTTS配音：重试延迟:{RETRY_DELAY},出错将重试:{RETRY_NUMS},并发:{MAX_CONCURRENT_TASKS}')
         self._stop_event.clear()
         total_tasks = len(self.queue_tts)
@@ -200,11 +196,13 @@ class EdgeTTS(BaseTTS):
                     ok += 1
                 else:
                     err += 1
+            if ok==0:
+                raise DubbingSrtError(f'All error for edge-tts ')
 
             if ok>0:
                 all_task = []
                 from concurrent.futures import ThreadPoolExecutor
-                self._signal(text=f'convert wav {total_tasks}')
+                self.signal(text=f'convert wav[{total_tasks}]')
                 with ThreadPoolExecutor(max_workers=min(1,len(self.queue_tts),os.cpu_count() or 1)) as pool:
                     for item in self.queue_tts:
                         mp3_path = item['filename'] + ".mp3"
@@ -213,6 +211,6 @@ class EdgeTTS(BaseTTS):
                     if len(all_task) > 0:
                         _ = [i.result() for i in all_task]
 
-            self._signal(text=f'[{err}] errors, {ok} succeed')
+            self.signal(text=f'[{err}] errors, {ok} succeed')
         finally:
             await asyncio.sleep(0.1)

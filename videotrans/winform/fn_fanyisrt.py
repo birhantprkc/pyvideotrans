@@ -1,22 +1,27 @@
 # 字幕批量翻译
+from typing import List
+
+from videotrans.task.taskcfg import InputFile
+
 
 def openwin():
     import json
     import os
     from pathlib import Path
-    from PySide6.QtCore import QUrl,QTimer
+    from PySide6.QtCore import QUrl
     from PySide6.QtGui import QDesktopServices, QTextCursor, Qt
     from PySide6 import QtWidgets
     from PySide6.QtWidgets import QFileDialog, QPlainTextEdit
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure.config import tr,app_cfg,settings,params,TEMP_DIR, HOME_DIR
     from videotrans.task.taskcfg import TaskCfgSTS
 
     from videotrans.util import tools
     from videotrans import translator
-    from videotrans.task._translate_srt import TranslateSrt
+    from videotrans.task.translate_srt import TranslateSrt
     RESULT_DIR = HOME_DIR + "/translate"
     SOURCE_DIR = RESULT_DIR
     uuid_list=[]
+    percent=""
     language_namelist = ["-"] + list(translator.LANGNAME_DICT.values())
 
     def toggle_state(state):
@@ -35,9 +40,10 @@ def openwin():
         winobj.fanyi_targettext.setDisabled(state)
 
     def feed(d):
+        nonlocal percent
         if winobj.has_done:
             return
-        d = json.loads(d)
+        d = json.loads(d) if isinstance(d,str) else d
         if d['type'] != 'error':
             winobj.loglabel.setStyleSheet("""color:#148cd2;background-color:transparent""")
             winobj.error_msg = ""
@@ -65,13 +71,16 @@ def openwin():
         elif d['type'] == 'set_source':
             winobj.fanyi_sourcetext.clear()
             winobj.fanyi_sourcetext.setPlainText(d['text'])
-        elif d['type'] in ['logs', 'succeed']:
-            if d['text']:
-                winobj.loglabel.setText(d["text"])
+        elif d['type'] == 'jindu':
+            percent=d['text']
+        elif d['type'] in ['logs']:
+            winobj.loglabel.setText(f'{percent} {d["text"]}')
         elif d['type'] in ['stop', 'end']:
+            percent=''
             winobj.has_done = True
             winobj.loglabel.setText(tr('quanbuend'))
             winobj.fanyi_start.setText(tr("Ended/Start operate"))
+            winobj.fanyi_sourcetext.setPlainText(tr('quanbuend'))
             toggle_state(False)
 
     def fanyi_import_fun():
@@ -106,7 +115,6 @@ def openwin():
                                                                      show_target=target_language,
                                                                      translate_type=translate_type)
        
-        print(f'{source_code=},{target_code=}')
         if target_language == '-':
             return tools.show_error(tr("fanyimoshi1"))
         
@@ -131,12 +139,12 @@ def openwin():
 
         settings.save()
 
-        video_list = [tools.format_video(it, None) for it in winobj.files]
+        video_list:List[InputFile] = [tools.format_video(it, None) for it in winobj.files]
         uuid_list = [obj['uuid'] for obj in video_list]
         if winobj.save_source.isChecked():
             SOURCE_DIR = Path(video_list[0]['name']).parent.as_posix()
         for it in video_list:
-            uuid_list.append(it['uuid'])
+            app_cfg.rm_uuid(it['uuid'])
             cfg={
                 "translate_type": translate_type,
                 "target_dir": SOURCE_DIR if SOURCE_DIR else RESULT_DIR,
@@ -146,12 +154,14 @@ def openwin():
             }
             trk = TranslateSrt(cfg=TaskCfgSTS(**cfg|it),out_format=winobj.out_format.currentIndex())
             app_cfg.trans_queue.put_nowait(trk)
+
+
         from videotrans.task.child_win_sign import SignThread
         th = SignThread(uuid_list=uuid_list, parent=winobj)
         th.uito.connect(feed)
         th.start()
         if len(video_list) == 1:
-            winobj.fanyi_sourcetext.setPlainText(Path(video_list[0]['name']).read_text(encoding='utf-8'))
+            winobj.fanyi_sourcetext.setPlainText(Path(video_list[0]['name']).read_text(encoding='utf-8-sig'))
             winobj.exportsrt.setVisible(True)
             winobj.fanyi_targettext.setReadOnly(False)
         else:

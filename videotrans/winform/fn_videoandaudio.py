@@ -11,8 +11,8 @@ def openwin():
     from PySide6.QtGui import QDesktopServices
     from PySide6.QtWidgets import QFileDialog
 
-    from videotrans.util import contants
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure import contants
+    from videotrans.configure.config import tr,app_cfg, params,TEMP_DIR, HOME_DIR
     # 使用内置的 open 函数
     from videotrans.util import tools
     RESULT_DIR = HOME_DIR + "/videoandaudio"
@@ -77,7 +77,7 @@ def openwin():
                             ['-y', '-i', audio, '-ss', '00:00:00.000', '-t', str(video_time / 1000), tmp_audio])
                         audio = tmp_audio
                     elif audio_time > video_time and self.audio_process == 1:
-                        tools.precise_speed_up_audio(file_path=audio, out=tmp_audio, target_duration_ms=video_time)
+                        tools.change_speed_rubberband(audio, tmp_audio, video_time)
                         audio = tmp_audio
                     if self.remain:
                         # 需要保留原声
@@ -118,7 +118,7 @@ def openwin():
                         result_file
                     ],force_cpu=False)
                 except Exception as e:
-                    from videotrans.configure._except import get_msg_from_except
+                    from videotrans.configure.excepts import get_msg_from_except
                     self.post(type='error', text=get_msg_from_except(e))
                 finally:
                     percent += round(100 / length, 2)

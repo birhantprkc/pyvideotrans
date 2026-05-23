@@ -1,22 +1,20 @@
-import threading
 import json
+import threading
 import traceback
 from pathlib import Path
-from typing import List, Dict, Optional
 
+from PySide6.QtCore import Qt, QTimer, QSize, QThread, Signal
+from PySide6.QtGui import QIcon, QColor
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel,
-    QPushButton, QWidget, QProgressBar, QApplication, 
-    QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QMessageBox, QMenu, QInputDialog
 )
-from PySide6.QtGui import QIcon, QDesktopServices, QColor, QCursor, QFont
-from PySide6.QtCore import Qt, QTimer, QSize, QUrl, QThread, Signal, QRect
-
 from pydub import AudioSegment
-from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
-from videotrans.util import tools
+
 from videotrans import tts
+from videotrans.configure.config import ROOT_DIR, tr, settings, logger
+from videotrans.util import tools
 
 
 class ReDubb(QThread):
@@ -37,7 +35,7 @@ class ReDubb(QThread):
             )
             self.uito.emit(f"ok:{self.idx}")
         except Exception as e:
-            from videotrans.configure._except import get_msg_from_except
+            from videotrans.configure.excepts import get_msg_from_except
             except_msg = get_msg_from_except(e)
             msg = f'{except_msg}:\n' + traceback.format_exc()
             self.uito.emit(msg)
@@ -54,7 +52,13 @@ class EditDubbingResultDialog(QDialog):
         self.parent = parent
         self.language = language
         self.cache_folder = cache_folder
-        self.queue_tts = json.loads(Path(f'{cache_folder}/queue_tts.json').read_text(encoding='utf-8'))
+        self.queue_tts = []
+        queue_tts_file = Path(f'{cache_folder}/queue_tts.json')
+        if queue_tts_file.exists():
+            try:
+                self.queue_tts = json.loads(queue_tts_file.read_text(encoding='utf-8'))
+            except (json.JSONDecodeError, OSError) as e:
+                logger.warning(f'Failed to load queue_tts.json: {e}')
 
         self.setWindowTitle(tr("Proofreading and dubbing - Re-dubbing"))
         self.setWindowIcon(QIcon(f"{ROOT_DIR}/videotrans/styles/icon.ico"))
@@ -218,7 +222,6 @@ class EditDubbingResultDialog(QDialog):
                 self.parent.activateWindow()
                 
         except Exception as e:
-            print(f"Load table failed: {e}")
             import traceback
             traceback.print_exc()
             self.loading_label.setText(f"Error: {e}")
@@ -492,8 +495,8 @@ class EditDubbingResultDialog(QDialog):
         # 删除旧文件
         try:
             Path(self.queue_tts[row]['filename']).unlink(missing_ok=True)
-        except Exception as e:
-            print(f"删除文件失败: {e}")
+        except OSError as e:
+            logger.exception(e,exc_info=True)
         
         # 重置时长
         self.queue_tts[row]['dubbing_s'] = 0.0
@@ -514,9 +517,13 @@ class EditDubbingResultDialog(QDialog):
 
     def _on_redub_finished(self, msg):
         """重配音完成回调"""
-        print(f'{msg=}')
         if msg.startswith("ok:"):
-            idx = int(msg[3:])
+            try:
+                idx = int(msg[3:])
+            except (ValueError,TypeError,IndexError):
+                return
+            if idx < 0 or idx >= len(self.queue_tts):
+                return
             item = self.queue_tts[idx]
             
             # 读取新文件时长
@@ -592,19 +599,9 @@ class EditDubbingResultDialog(QDialog):
             # 不修改文本，以便可以单独使用 各种配音渠道支持的控制符号进行声音微调
             text_item = self.table.item(i, 4)
             text = text_item.text().strip() if text_item else item['text'].strip()
-            #item['text'] = text
-            
+
             # 删除空文本对应的音频文件
             if not text:
                 Path(item['filename']).unlink(missing_ok=True)
-            
-            # 清理临时字段
-            #for key in ['_duration', '_msg', '_time_str']:
-            #    item.pop(key, None)
-        
-        #try:
-        #    #Path(f'{self.cache_folder}/queue_tts.json').write_text(json.dumps(self.queue_tts), encoding="utf-8")
-        #except Exception:
-        #    pass
-        
+
         self.accept()

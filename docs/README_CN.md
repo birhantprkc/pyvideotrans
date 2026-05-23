@@ -18,12 +18,15 @@
 
 **pyVideoTrans** 致力于无缝地将视频从一种语言转换为另一种语言，包含语音识别、字幕翻译、多角色配音及音画同步等全套流程。支持本地离线部署与多种主流在线 API。
 
-![](https://pvtr2.pyvideotrans.com/1769151532418_395-1.png)
+<img width="1566" height="912" alt="image" src="https://github.com/user-attachments/assets/2d5bd178-3dc0-45ee-bc1c-dbb5f6705cf4" />
+
 
 
 ---
 
 ## ✨ 核心功能
+
+> [技术架构与原理](architecture.md)
 
 - **🎥 全自动视频翻译**: 一键完成：语音识别(ASR) -> 字幕翻译 -> 语音合成(TTS) -> 视频合成。
 - **🎙️ 语音转录 / 字幕生成**: 批量将音视频转为 SRT 字幕，支持 **说话人分离**，区分不同角色。

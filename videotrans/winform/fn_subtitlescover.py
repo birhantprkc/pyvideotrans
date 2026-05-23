@@ -7,7 +7,7 @@ def openwin():
     from PySide6.QtCore import QThread, Signal, QUrl,QTimer
     from PySide6.QtGui import QDesktopServices
     from PySide6.QtWidgets import QFileDialog
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure.config import tr,app_cfg, params,TEMP_DIR, HOME_DIR
     from videotrans.util import tools
     RESULT_DIR = HOME_DIR + "/subtitlescover"
 
@@ -29,7 +29,7 @@ def openwin():
                     raw_path = Path(v)
                     # 格式不变直接复制
                     if raw_path.suffix.lower() == self.target_format:
-                        shutil.copy2(self.subtitlefiles, RESULT_DIR + f'/{raw_path.name}')
+                        shutil.copy2(v, RESULT_DIR + f'/{raw_path.name}')
                         continue
                     if self.target_format == 'txt':
                         if raw_path.name.lower().endswith('.srt'):
@@ -58,7 +58,7 @@ def openwin():
                     jd = round((i + 1) * 100 / len(self.subtitlefiles), 2)
                     self.post(type='jd', text=f'{jd}%')
             except Exception as e:
-                from videotrans.configure._except import get_msg_from_except
+                from videotrans.configure.excepts import get_msg_from_except
                 self.post(type='error', text=get_msg_from_except(e))
             else:
                 self.post(type="ok", text='Ended')

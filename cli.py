@@ -1,19 +1,14 @@
 import asyncio
 import multiprocessing
 import sys
-import os
 import re
 import argparse
+from dataclasses import asdict
 from multiprocessing import freeze_support
 from pathlib import Path
+
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-# 将这个工厂函数注册给 huggingface_hub
-from videotrans.util.req_fac import custom_session_factory
-import huggingface_hub
-huggingface_hub.configure_http_backend(backend_factory=custom_session_factory)
-
-
 
 # 调度函数 避免子进程重复执行
 def main():
@@ -46,8 +41,8 @@ def main():
 
         # --- Argparse 描述 ---
         "cli_desc": {
-            "zh": "pyVideoTrans视频翻译功能命令行模式",
-            "en": "pyVideoTrans CLI Mode for Video Translation"
+            "zh": "pyVideoTrans 命令行模式,文档[https://pyvideotrans.com/cli]",
+            "en": "pyVideoTrans CLI Mode,Docs[https://pyvideotrans.com/cli]"
         },
         "help_task": {
             "zh": "任务类型: stt(语音转录), tts(文字配音), sts(字幕翻译), vtv(视频翻译)",
@@ -212,28 +207,25 @@ def main():
             "en": "--target_language_code"
         }
     }
-    from videotrans.configure import config    
+    from videotrans.configure import config
     config.init_run()
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,TEMP_DIR,logger,defaulelang,HOME_DIR
-
-
+    from videotrans.configure.config import ROOT_DIR, app_cfg, TEMP_DIR, defaulelang
     from videotrans import recognition, translator, tts
-    from videotrans.task._speech2text import SpeechToText
-    from videotrans.task._translate_srt import TranslateSrt
+    from videotrans.task.speech2text import SpeechToText
+    from videotrans.task.translate_srt import TranslateSrt
     from videotrans.task.trans_create import TransCreate
-    from videotrans.task._dubbing import DubbingSrt
+    from videotrans.task.dubbing import DubbingSrt
     from videotrans.task.taskcfg import TaskCfgSTT, TaskCfgTTS, TaskCfgSTS, TaskCfgVTT
     from videotrans.util import tools
     from videotrans.util.gpus import getset_gpu
 
-    def tr(key, *args)-> str:
+    def tr(key, *args) -> str:
         """翻译辅助函数"""
         lang_dict = TEXT_DB.get(key, {})
         text = lang_dict.get(defaulelang, key)  # 默认回退到key本身
         if args:
             return text.format(*args)
         return text
-
 
     # 语音转录 speech to text
     def stt_fun(params):
@@ -246,17 +238,16 @@ def main():
         trk.diariz()
         trk.task_done()
 
-
     # 语音合成 text to speech
     def tts_fun(params):
         print(f"\n{tr('exec_tts_task')}")
         print(tr('process_file', params.get('name')))
         print(tr('param_list', params))
         trk = DubbingSrt(cfg=TaskCfgTTS(**params), out_ext='wav')
+        trk.prepare()
         trk.dubbing()
         trk.align()
         trk.task_done()
-
 
     # 字幕翻译 subtitles to subtitles
     def sts_fun(params):
@@ -264,9 +255,9 @@ def main():
         print(tr('process_file', params.get('name')))
         print(tr('param_list', params))
         trk = TranslateSrt(cfg=TaskCfgSTS(**params), out_format=0)
+        trk.prepare()
         trk.trans()
         trk.task_done()
-
 
     # 视频翻译  video to video
     def vtv_fun(params):
@@ -277,15 +268,18 @@ def main():
         trk = TransCreate(cfg=TaskCfgVTT(**params))
         trk.prepare()
         trk.recogn()
+        trk.diariz()
         trk.trans()
         trk.dubbing()
         trk.align()
+        trk.recogn2pass()
         trk.assembling()
         trk.task_done()
 
     # True 为软件退出，不执行任何动作
     app_cfg.exit_soft = False
     app_cfg.exec_mode = 'cli'
+
     recogn_help = ", ".join([f'{i}={it}' for i, it in enumerate(recognition.RECOGN_NAME_LIST)])
     trans_help = ", ".join([f'{i}={it}' for i, it in enumerate(translator.TRANSLASTE_NAME_LIST)])
     tts_help = ", ".join([f'{i}={it}' for i, it in enumerate(tts.TTS_NAME_LIST)])
@@ -298,6 +292,8 @@ def main():
     )
 
     # --- 核心参数 ---
+    # parser.add_argument('--help', action='store_true',  help="help",)
+
     parser.add_argument('--task', type=str, required=True, choices=['stt', 'tts', 'sts', 'vtv'],
                         help=tr("help_task"))
     parser.add_argument('--name', type=str, required=True,
@@ -333,8 +329,7 @@ def main():
 
     # --- 翻译/语言 相关参数组 ---
     trans_group = parser.add_argument_group(tr("group_trans"))
-    trans_group.add_argument('--translate_type', type=int, default=0,
-                             help=f"{tr('help_translate_type')}\n{trans_help}")
+    trans_group.add_argument('--translate_type', type=int, default=0, help=f"{tr('help_translate_type')}\n{trans_help}")
     # 注意：source/target 在不同模式下要求不同，设为 None 由逻辑层校验
     trans_group.add_argument('--source_language_code', type=str, default=None,
                              help=f"{tr('help_source_lang')}\n{target_language_help}")
@@ -369,15 +364,16 @@ def main():
     # 公共参数
 
     _file_obj = tools.format_video(Path(args.name).absolute().as_posix())
-    _nospacebasename = re.sub(r'[\s\. #*?!:"]', '-', _file_obj["basename"])
+    _nospacebasename = re.sub(r'[\s. #*?!:"]', '-', _file_obj["basename"])
     _cache_folder = f'{TEMP_DIR}/{_file_obj["uuid"]}'
     _target_dir = f'{ROOT_DIR}/output/{_nospacebasename}'
-    common_params = {'name': args.name, "cache_folder": _cache_folder, "target_dir": _target_dir}
-    common_params.update(_file_obj)
+    _file_obj['target_dir']=_target_dir
+
+    common_params = {'name': args.name, "cache_folder": _cache_folder}
+    common_params.update(asdict(_file_obj))
+
     Path(_cache_folder).mkdir(parents=True, exist_ok=True)
     Path(_target_dir).mkdir(parents=True, exist_ok=True)
-
-    print('Checking GPUs...')
     getset_gpu()
 
     if task == 'stt':
@@ -408,12 +404,11 @@ def main():
             "voice_role": args.voice_role,
             "voice_rate": args.voice_rate,
             "volume": args.volume,
-            "is_cuda":args.cuda,
             "pitch": args.pitch,
+            "is_cuda": args.cuda,
             "voice_autorate": args.voice_autorate,
             "align_sub_audio": args.align_sub_audio,
             "target_language_code": args.target_language_code
-
         }
         tts_fun({**common_params, **tts_params})
 
@@ -471,6 +466,7 @@ def main():
 
             # 翻译与通用部分
             "translate_type": args.translate_type,
+
             "is_separate": args.is_separate,
             "recogn2pass": args.recogn2pass,
             "subtitle_type": args.subtitle_type,
@@ -479,12 +475,29 @@ def main():
         vtv_fun({**common_params, **vtv_params})
 
 
+"""
+#语音转录 STT
+uv run cli.py --task stt --name "D:/videos/demo.mp4" --recogn_type 0 --model_name tiny
+
+
+# 字幕翻译 STS
+uv run cli.py --task sts --name "D:/subs/source.srt" --target_language_code en --translate_type 0
+
+
+# 语音合成 TTS
+uv run cli.py --task tts --name "C:/subs/movie.srt" --tts_type 0 --voice_role "zh-CN-YunyangNeural" --target_language_code zh-cn
+
+
+# 视频翻译 VTT
+uv run cli.py --task vtv --name "E:/movies/clip.mp4" --source_language_code zh-cn --target_language_code en --voice_role "en-US-GuyNeural" --is_separate --cuda --subtitle_type 1
+
+
+"""
+
 if __name__ == "__main__":
-    # window
     freeze_support()
     try:
-        multiprocessing.set_start_method('spawn',force=True)
+        multiprocessing.set_start_method('spawn', force=True)
     except RuntimeError:
-        # 有时候环境已经设定好了，再次设定会报错，可以忽略
         pass
     main()

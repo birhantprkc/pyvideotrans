@@ -1,7 +1,7 @@
 def openwin():
     from PySide6 import QtWidgets
     from videotrans import recognition
-    from videotrans.configure.config import tr,params,settings,app_cfg,logger
+    from videotrans.configure.config import tr,params, app_cfg
     from videotrans.util import tools
     from videotrans.util.TestSTT import TestSTT
     def feed(d):
@@ -35,6 +35,7 @@ def openwin():
         params["deepgram_apikey"] = apikey
         params["deepgram_utt"] = 200 if utt else 200
         params.save()
+        tools.set_process(text='', type="refreshmodel_list")
         winobj.close()
 
     from videotrans.component.set_form import DeepgramForm

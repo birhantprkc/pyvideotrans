@@ -1,10 +1,10 @@
-# 对应 豆包语音大模型合成2
+# 对应 豆包语音合成大模型2.0
 
 def openwin():
     from PySide6 import QtWidgets
     from videotrans.util import tools
     from videotrans.util.ListenVoice import ListenVoice
-    from videotrans.configure.config import ROOT_DIR,tr,app_cfg,settings,params,TEMP_DIR,logger,defaulelang,HOME_DIR
+    from videotrans.configure.config import tr,app_cfg, params,TEMP_DIR
     def feed(d):
         if d == "ok":
             QtWidgets.QMessageBox.information(winobj, "ok", "Test Ok")
@@ -26,7 +26,7 @@ def openwin():
         import time
         wk = ListenVoice(parent=winobj, queue_tts=[{
             "text": '你好啊我的朋友',
-            "role": "vivi",
+            "role": "Vivi 2.0",
             "filename": TEMP_DIR + f"/{time.time()}-doubao2.wav",
             "tts_type": tts.DOUBAO2_TTS}],
                          language="zh",
