@@ -129,11 +129,10 @@ def openai_whisper(
             if jianfan and raws:
                 for it in raws:
                     it['text'] = zhconv.convert(it['text'], 'zh-hans')
+        return raws, None
     except BaseException as e:
         msg = traceback.format_exc()
         return False, f'{e}:{msg}'
-    else:
-        return raws, None
 
 
 def faster_whisper(
@@ -318,11 +317,12 @@ def faster_whisper(
             if jianfan and raws:
                 for it in raws:
                     it['text'] = zhconv.convert(it['text'], 'zh-hans')
+            logger.debug('返回识别结果')
+        return raws,None
     except BaseException as e:
         msg = traceback.format_exc()
         return False, f'{e}:{msg}'
-    else:
-        return raws, None
+
 
 
 def pipe_asr(
@@ -520,7 +520,10 @@ def qwen3asr_fun(
         device_index=0  # gpu索引
 ) -> Tuple[Union[List[SrtItem], bool], Union[str, None]]:
     import torch
-    from qwen_asr import Qwen3ASRModel
+    try:
+        from qwen_asr import Qwen3ASRModel
+    except ImportError:
+        logger.critical('please run  uv sync --extra qwenasr ')
     if is_cuda:
         device_map = f'cuda:{device_index}'
         dtype = torch.float16
