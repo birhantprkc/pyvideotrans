@@ -387,13 +387,13 @@ class TransCreate(BaseTask):
                     uuid=self.uuid)
 
                 self.signal(text=tr("Re-segmenting..."))
-                srt_list = ob.llm_segment(self.source_srt_list, )
+                srt_list = ob.llm_segment(self.source_srt_list )
                 if srt_list and len(srt_list) > len(self.source_srt_list) / 2:
                     self.source_srt_list = srt_list
                     shutil.copy2(self.cfg.source_sub, f'{self.cfg.source_sub}-No-{tr("LLM Rephrase")}.srt')
                     self._save_srt_target(self.source_srt_list, self.cfg.source_sub)
                 else:
-                    logger.error('重新断句失败，已恢复原样')
+                    logger.error(f'重新断句失败，已恢复原样,原始字幕行:{len(self.source_srt_list)}, 重新断句后字幕行:{len(srt_list)}\n断句结果:\n{srt_list=}')
             except Exception as e:
                 self.signal(text=tr("Re-segmenting Error"))
                 logger.exception(f"重新断句失败，已恢复原样 {e}", exc_info=True)
@@ -591,19 +591,23 @@ class TransCreate(BaseTask):
         )
         if self._exit():  return
 
-        # 一一核对每条字幕
+        # 一一核对每条字幕,翻译可能导致每条字幕开头结尾出现3个 . 符号，配音后和无需配音时，需清理
         target_srt = self.check_target_sub(rawsrt, target_srt)
-
+        if not self.should_dubbing:
+            for it in target_srt:
+                it['text']=it['text'].strip('...')
         # 仅提取，并且双语输出
         if self.cfg.app_mode == 'tiqu' and self.cfg.output_srt > 0 and self.cfg.source_language_code != self.cfg.target_language_code:
             _source_srt_len = len(rawsrt)
             for i, it in enumerate(target_srt):
+                
                 if i < _source_srt_len and self.cfg.output_srt == 1:
                     # 目标语言在下
                     it['text'] = ("\n".join([rawsrt[i]['text'].strip(), it['text'].strip()])).strip()
                 elif i < _source_srt_len and self.cfg.output_srt == 2:
                     it['text'] = ("\n".join([it['text'].strip(), rawsrt[i]['text'].strip()])).strip()
-
+                
+                
         self._save_srt_target(target_srt, self.cfg.target_sub)
 
         if self.cfg.app_mode == 'tiqu':
@@ -630,6 +634,12 @@ class TransCreate(BaseTask):
         self.signal(text=tr('kaishipeiyin'))
         self.precent += 3
         self._tts()
+        # 配音完毕后，需更新 目标字幕，移除前后3个点
+        if Path(self.cfg.target_sub).exists():
+            subs = tools.get_subtitle_from_srt(self.cfg.target_sub)
+            for it in subs:
+                it['text']=it['text'].strip('...')
+            self._save_srt_target(subs, self.cfg.target_sub)
         self.signal(text=tr('The dubbing is finished'))
         logger.debug(f'[语音合成阶段结束耗时]:{time.time()-_st}s')
 
@@ -677,7 +687,7 @@ class TransCreate(BaseTask):
             for (idx, it) in enumerate(self.queue_tts):
                 startraw = tools.ms_to_time_string(ms=it['start_time'])
                 endraw = tools.ms_to_time_string(ms=it['end_time'])
-                srt += f"{idx + 1}\n{startraw} --> {endraw}\n{it['text']}\n\n"
+                srt += f"{idx + 1}\n{startraw} --> {endraw}\n{it['text'].strip('...')}\n\n"
             # 字幕保存到目标文件夹
             with  Path(self.cfg.target_sub).open('w', encoding="utf-8") as f:
                 f.write(srt.strip())
@@ -1173,12 +1183,14 @@ class TransCreate(BaseTask):
     def _video_extend(self, duration_ms=1000):
         sec = duration_ms / 1000.0
         final_video_path = Path(f'{self.cfg.cache_folder}/final_video_with_freeze_lastend.mp4').as_posix()
+               
         cmd = ['-y', '-i', os.path.basename(self.cfg.novoice_mp4),
                '-vf', f'tpad=stop_mode=clone:stop_duration={sec:.3f}',
                '-c:v', 'libx264',
                '-crf', f'{settings.get("crf", 23)}',
                '-preset', settings.get('preset', 'veryfast'),
-               '-an', 'final_video_with_freeze_lastend.mp4']
+               '-an', 'final_video_with_freeze_lastend.mp4'
+        ]
         try:
             tools.runffmpeg(cmd, force_cpu=True, cmd_dir=self.cfg.cache_folder)
             if Path(final_video_path).exists():
@@ -1313,7 +1325,14 @@ class TransCreate(BaseTask):
                 target_m4a_basename
             ]
             enc_qua = ['-crf', f'{settings.get("crf", 23)}', '-preset', settings.get('preset', 'medium')]
-
+            
+            # 若选 cfr，无论是否有视频慢速，均固定帧率输出
+            # 若选vfr仅在有视频慢速时使用，其他使用ffmpeg默认auto
+            fps_mode=None
+            if settings.get('fps_mode')=='cfr':
+                fps_mode=["-r",f"{self.video_info['video_fps']}","-fps_mode","cfr"]
+            elif self.cfg.video_autorate:
+                fps_mode=["-fps_mode","vfr"]
             # 无字幕 或 软字幕
             if self.cfg.subtitle_type not in [1, 3]:
                 # 软字幕
@@ -1346,8 +1365,9 @@ class TransCreate(BaseTask):
                     "-movflags",
                     "+faststart",
                 ]
-                if self.cfg.video_autorate:
-                    cmd2.extend(["-fps_mode", "vfr"])
+                if fps_mode:
+                    cmd2.extend(fps_mode)
+                
 
                 cmd2.extend(["-t", str(duration_s), tmp_target_mp4_basename])
                 if is_copy_mode:
@@ -1386,8 +1406,8 @@ class TransCreate(BaseTask):
                 ]
                 cmd3 = ["-movflags", "+faststart"]
 
-                if self.cfg.video_autorate:
-                    cmd3.extend(["-fps_mode", "vfr"])
+                if fps_mode:
+                    cmd3.extend(fps_mode)
 
                 cmd3.extend(["-t", str(duration_s), tmp_target_mp4_basename])
                 if app_cfg.video_codec.startswith('libx') or settings.get('force_lib'):

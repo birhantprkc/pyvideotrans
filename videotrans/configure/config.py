@@ -61,7 +61,7 @@ def _set_env():
     os.environ['HF_HUB_CACHE'] = ROOT_DIR + "/models"
     os.environ['HF_TOKEN_PATH'] = ROOT_DIR + "/models/hf_token.txt"
     os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = 'true'
-    os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = 'true'
+    #os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = 'true'
     os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = "3600"
     os.environ["HF_HUB_DISABLE_XET"] = "1"
 
@@ -79,11 +79,13 @@ def _set_logs():
                                         encoding='utf-8')
     _file_handler.setLevel(logging.DEBUG)
     _file_handler.setFormatter(formatter)
-    _console_handler = logging.StreamHandler(sys.stdout)
-    _console_handler.setLevel(logging.WARNING)
-    _console_handler.setFormatter(formatter)
     logger.addHandler(_file_handler)
-    logger.addHandler(_console_handler)
+
+    if sys.stdout is not None:
+        _console_handler = logging.StreamHandler(sys.stdout)
+        _console_handler.setLevel(logging.WARNING)
+        _console_handler.setFormatter(formatter)
+        logger.addHandler(_console_handler)
 
     logging.getLogger("transformers").setLevel(logging.DEBUG)
     logging.getLogger("filelock").setLevel(logging.DEBUG)
@@ -336,6 +338,7 @@ class AppSettings:
             "Whisper_cpp_models": Whisper_cpp_models,
             "Whisper_net_models": Whisper_cpp_models,
             "crf": 23,
+            "fps_mode":"vfr",
             "edgetts_max_concurrent_tasks": 10,
             "edgetts_retry_nums": 3,
             "del_end_punc":True,#删除每条字幕末尾的标点
@@ -348,7 +351,7 @@ class AppSettings:
             "video_codec": 264,
             "out_video_ext":".mp4",# [.mp4,.mkv]
             "noise_separate_nums": 4,
-            "aitrans_temperature": 1.0,
+            "aitrans_temperature": 0.1,
             "aitrans_context": False,
             "batch_nums": 0,# 0=并发，1=串行翻译,>1 每批同时多少个
             "ai302_models": Ai302_Models,
@@ -482,8 +485,6 @@ class AppSettings:
             tk = p.read_text().strip()
             if tk:
                 self.hf_token = tk
-            else:
-                p.unlink(missing_ok=True)
         if not p.is_file() and self.hf_token:
             p.write_text(self.hf_token)
 
@@ -635,7 +636,7 @@ class AppParams:
             "deepl_authkey": "",
             "deepl_api": "",
             "deepl_gid": "",
-            "deeplx_address": "",
+            "deeplx_address": "http://127.0.0.1:1188",
             "deeplx_key": "",
             "libre_address": "",
             "libre_key": "",
@@ -650,7 +651,8 @@ class AppParams:
             "baidu_miyue": "",
             "chatgpt_api": "",
             "chatgpt_key": "",
-            "chatgpt_max_token": 8192,
+            "chatgpt_reasoning_effort": "No",
+            "chatgpt_max_token": 16384,
             "chatgpt_model": str(settings.get('chatgpt_model', '-')).strip().split(',')[0],
 
             "azure_api": "",
@@ -659,26 +661,27 @@ class AppParams:
             "azure_model": str(settings.get('azure_model', '-')).strip().split(',')[0],
             "gemini_key": "",
             "gemini_model": DEFAULT_GEMINI_MODEL.split(',')[0],
-            "gemini_maxtoken": 18192,
-            "gemini_thinking_budget": 24576,
+            "gemini_maxtoken": 16384,
             "gemini_ttsstyle": "",
             "gemini_ttsmodel": GEMINI_TTS_MODELS.split(',')[0],
+            
             "localllm_api": "",
             "localllm_key": "",
             "localllm_model": str(settings.get('localllm_model', '-')).strip().split(',')[0],
-            "localllm_max_token": "4096",
+            "localllm_max_token": 8192,
             "zhipu_key": "",
             "zhipu_model": str(settings.get('zhipuai_model', '-')).strip().split(',')[0],
-            "zhipu_max_token": "98304",
+            "zhipu_max_token": 16384,
             "guiji_key": "",
             "guiji_model": str(settings.get('guiji_model', '-')).strip().split(',')[0],
-            "guiji_max_token": "8192",
+            "guiji_max_token": 16384,
             "deepseek_key": "",
             "deepseek_model": str(settings.get('deepseek_model', '-')).strip().split(',')[0],
-            "deepseek_max_token": "40960",
+            "deepseek_max_token": 32768,
             "openrouter_key": "",
+            "openrouter_reasoning_effort": "No",
             "openrouter_model": str(settings.get('openrouter_model', '-')).strip().split(',')[0],
-            "openrouter_max_token": "8192",
+            "openrouter_max_token": 16384,
             "zijiehuoshan_key": "",
             "zijiehuoshan_model": str(settings.get('zijiehuoshan_model', '-')).strip().split(',')[0],
             "qwenmt_key": "",
@@ -689,12 +692,14 @@ class AppParams:
             "ai302_key": "",
             "ai302_model": "",
             "ai302_model_recogn": "whisper-1",
-            "whipserx_api": "",
+            "whipserx_api": "http://127.0.0.1:9092",
+            
             "trans_api_url": "",
             "trans_secret": "",
             "elevenlabstts_role": [],
             "elevenlabstts_key": "",
             "elevenlabstts_models": ELEVENLABS_TTS_MODELS.split(',')[0],
+            
             "openaitts_api": "",
             "openaitts_key": "",
             "openaitts_model": "tts-1",
@@ -705,25 +710,25 @@ class AppParams:
             "xiaomi_ttsmodel":XIAOMI_TTS_MODELS.split(',')[0],
             "xiaomi_key":"",
             "xiaomi_model":XIAOMI_MODELS.split(',')[0],
-            "xiaomi_maxtoken":"18092",
+            "xiaomi_maxtoken":16384,
             
 
             "openaitts_instructions": "",
             "qwentts_key": "",
             "qwentts_model": "qwen-tts-latest",
             "qwentts_role": "Chelsie",
-            "kokoro_api": "",
+            "kokoro_api": "http://127.0.0.1:5066",
             "openairecognapi_url": "",
             "openairecognapi_key": "",
             "openairecognapi_prompt": "",
             "openairecognapi_model": "whisper-1",
             "parakeet_address": "",
-            "clone_api": "",
+            "clone_api": "http://127.0.0.1:9988",
             "clone_voicelist": ["clone"],
-            "zh_recogn_api": "",
+
             "recognapi_url": "",
             "recognapi_key": "",
-            "stt_url": "",
+            "stt_url": "http://127.0.0.1:9977",
             "stt_model": "large-v3-turbo",
             "ttsapi_url": "",
             "ttsapi_voice_role": "",
@@ -737,7 +742,7 @@ class AppParams:
             
             "minimax_key":"",
             "minimax_model": MINIMAX_MODELS.split(',')[0],
-            "minimax_max_tokens":8192,
+            "minimax_max_tokens":16384,
             "minimax_api":"https://api.minimaxi.com/v1",
             
             "ai302tts_key": "",
@@ -747,29 +752,28 @@ class AppParams:
             "azure_speech_key": "",
             "chatterbox_cfg_weight": 0.5,
             "chatterbox_exaggeration": 0.5,
-            "gptsovits_url": "",
+            "gptsovits_url": "http://127.0.0.1:9880",
             "gptsovits_role": "",
             "gptsovits_isv2": True,
-            "gptsovits_extra": "pyvideotrans",
-            "cosyvoice_url": "",
-            "omnivoice_url": "",
-            "fishtts_url": "",
-            "f5tts_url": "",
+            "cosyvoice_url": "http://127.0.0.1:8000",
+            "omnivoice_url": "http://127.0.0.1:7860",
+            "fishtts_url": "http://127.0.0.1:8080/v1/tts",
+            "f5tts_url": "http://127.0.0.1:7860",
             "f5tts_model": "",
             "f5tts_ttstype": "F5-TTS",
             "f5tts_role": "nverguo.wav#你说四大皆空，却为何，紧闭双眼，若你睁开眼睛看看我，我不相信你，两眼空空。",
             "index_tts_version": 1,
             "f5tts_is_whisper": False,
-            "indextts_url": "",
-            "voxcpmtts_url": "",
+            "indextts_url": "http://127.0.0.1:7860",
+            "voxcpmtts_url": "http://127.0.0.1:7860",
             "voxcpmtts_version": "v2",
-            "sparktts_url": "",
-            "diatts_url": "",
+            "sparktts_url": "http://127.0.0.1:7860",
+            "diatts_url": "http://127.0.0.1:7860",
             "doubao2_appid": "",
             "doubao2_access": "",
             "zijierecognmodel_appid": "",
             "zijierecognmodel_token": "",
-            "chattts_api": "",
+            "chattts_api": "http://127.0.0.1:9966",
             "app_mode": "biaozhun",
             "stt_source_language": 0,
             "stt_recogn_type": 0,
@@ -874,9 +878,11 @@ defaulelang,_transobj=_init_language()
 
 _proxy = settings.proxy or os.environ.get('HTTPS_PROXY', '')
 if _proxy:
+    os.environ['HTTPS_PROXY'] = _proxy
+    os.environ['HTTP_PROXY'] = _proxy
     app_cfg.proxy=_proxy
-    os.environ['HTTPS_PROXY'] = app_cfg.proxy
-    os.environ['HTTP_PROXY'] = app_cfg.proxy
+    if not settings.proxy:
+        settings['proxy'] = _proxy
 
 
 # 主进程执行
