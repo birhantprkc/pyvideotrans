@@ -3,9 +3,8 @@
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
-
 from videotrans.configure.config import tr, settings, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_siliconflowform(object):
@@ -101,7 +100,7 @@ class Ui_siliconflowform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/siliconflow-ai'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/siliconflow-ai'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -118,9 +117,9 @@ class Ui_siliconflowform(object):
         self.guiji_model.clear()
         self.guiji_model.addItems(allmodels)
         self.edit_allmodels.setPlainText(allmodels_str)
-        self.guiji_key.setText(params.get("guiji_key",''))
+        self.guiji_key.setText(str(params.get("guiji_key",'')))
         self.guiji_model.setCurrentText(params.get("guiji_model",''))
-        self.max_token.setText(params.get("guiji_max_token",''))
+        self.max_token.setText(str(params.get("guiji_max_token",'')))
 
     def retranslateUi(self, siliconflowform):
         siliconflowform.setWindowTitle(tr("SiliconFlow"))

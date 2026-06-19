@@ -5,7 +5,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 from videotrans.configure.config import tr, params, settings
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_qwenttsform(object):
@@ -66,7 +66,7 @@ class Ui_qwenttsform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/qwen-tts'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/qwen-tts'))
 
         h4.addWidget(self.set_qwentts)
         h4.addWidget(self.test_qwentts)
@@ -81,7 +81,7 @@ class Ui_qwenttsform(object):
         self.qwentts_model.addItems(settings.get('qwentts_models','').split(','))
 
         if params.get("qwentts_key",''):
-            self.qwentts_key.setText(params.get("qwentts_key",''))
+            self.qwentts_key.setText(str(params.get("qwentts_key",'')))
         if params.get("qwentts_model",''):
             self.qwentts_model.setCurrentText(params.get("qwentts_model",''))
         self.qwentts_modellist.setPlainText(settings.get('qwentts_models'))

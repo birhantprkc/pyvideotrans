@@ -1,8 +1,7 @@
 from typing import Union, Type
 from videotrans.configure.config import tr, params, app_cfg
-from videotrans.configure.excepts import DubbingSrtError
 from videotrans.tts._base import BaseTTS
-from videotrans import winform, ChannelProvider, get_class
+from videotrans import ChannelProvider, get_class
 
 # 推荐
 EDGE_TTS = 0
@@ -45,7 +44,8 @@ FISHTTS = 27
 AZURE_TTS = 28
 AI302_TTS = 29
 CAMB_TTS = 30
-TTS_API = 31
+G_TTS = 31
+TTS_API = 32
 
 
 # 支持克隆的渠道
@@ -107,11 +107,11 @@ _ID_NAME_DICT = {
     AZURE_TTS: ChannelProvider("Azure-TTS", "._azuretts", key_name="azure_speech_key", win="azuretts"),
     AI302_TTS: ChannelProvider("302.AI", "._ai302tts", key_name="ai302_key", win="ai302"),
     CAMB_TTS: ChannelProvider("CAMB AI TTS", "._cambtts", key_name="camb_api_key", win="cambtts"),
+    G_TTS: ChannelProvider("gTTS", "._gtts"),
     TTS_API: ChannelProvider(tr("Customize API"), "._ttsapi", key_name="ttsapi_url", win="ttsapi")
 }
 # 强制保持按照每个常量值大小排序
 _ID_NAME_DICT=dict(sorted(_ID_NAME_DICT.items(),key=lambda item:item[0]))
-
 TTS_NAME_LIST = [it.name for it in _ID_NAME_DICT.values()]
 
 
@@ -151,8 +151,8 @@ def is_input_api(tts_type: int = None, return_str=False):
     if not _cls:
         return True
     if _cls.key_name and not params.get(_cls.key_name):
-        return "Please configure the SK or API information of the channel first." if return_str else winform.get_win(
-            _cls.win).openwin()
+        from videotrans import winform
+        return "Please configure the SK or API information of the channel first." if return_str else winform.get_win(_cls.win).openwin()
     return True
 
 
@@ -179,6 +179,7 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
 
     _cls: Union[Type[BaseTTS], None] = get_class(tts_type, "tts", _ID_NAME_DICT)
     if not _cls:
+        from videotrans.configure.excepts import DubbingSrtError
         raise DubbingSrtError(f'No this TTS Channel:{tts_type=}')
 
     return _cls(**kwargs).run()  # type:ignore

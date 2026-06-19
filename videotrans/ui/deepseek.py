@@ -5,7 +5,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 from videotrans.configure.config import tr, settings, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_deepseekform(object):
@@ -109,7 +109,7 @@ class Ui_deepseekform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/deepseek-ai'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/deepseek-ai'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -130,7 +130,7 @@ class Ui_deepseekform(object):
         self.deepseek_max_token.setText(str(params.get('deepseek_max_token',40960)))
 
         self.deepseek_thinking.setChecked(bool(params.get("deepseek_thinking",False)))
-        self.deepseek_key.setText(params.get("deepseek_key",''))
+        self.deepseek_key.setText(str(params.get("deepseek_key",'')))
         self.deepseek_model.setCurrentText(params.get("deepseek_model",''))
 
     def retranslateUi(self, deepseekform):

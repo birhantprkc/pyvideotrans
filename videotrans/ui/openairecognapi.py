@@ -2,7 +2,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 from videotrans.configure.config import tr, params, settings
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_openairecognapiform(object):
@@ -86,7 +86,7 @@ class Ui_openairecognapiform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/openairecogn'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/openairecogn'))
 
         self.retranslateUi(openairecognapiform)
         QtCore.QMetaObject.connectSlotsByName(openairecognapiform)
@@ -98,7 +98,7 @@ class Ui_openairecognapiform(object):
         self.openairecognapi_model.addItems(allmodels)
         self.edit_allmodels.setPlainText(allmodels_str)
 
-        self.openairecognapi_key.setText(params.get("openairecognapi_key",''))
+        self.openairecognapi_key.setText(str(params.get("openairecognapi_key",'')))
         self.openairecognapi_prompt.setText(params.get("openairecognapi_prompt",''))
         self.openairecognapi_url.setText(params.get("openairecognapi_url",''))
         if params.get('openairecognapi_model','') in allmodels:

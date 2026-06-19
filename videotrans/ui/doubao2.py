@@ -5,7 +5,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 from videotrans.configure.config import tr, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_doubao2form(object):
@@ -76,7 +76,7 @@ class Ui_doubao2form(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/doubao2tts'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/doubao2tts'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -86,8 +86,8 @@ class Ui_doubao2form(object):
         self.retranslateUi(doubao2form)
         QtCore.QMetaObject.connectSlotsByName(doubao2form)
     def update_ui(self):
-        self.doubao2_appid.setText(params.get("doubao2_appid",''))
-        self.doubao2_access.setText(params.get("doubao2_access",''))
+        self.doubao2_appid.setText(str(params.get("doubao2_appid",'')))
+        self.doubao2_access.setText(str(params.get("doubao2_access",'')))
 
     def retranslateUi(self, doubao2form):
         doubao2form.setWindowTitle(tr("DouBao2"))

@@ -3,9 +3,8 @@
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
-
 from videotrans.configure.config import tr, params, settings
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_zhipuaiform(object):
@@ -102,7 +101,7 @@ class Ui_zhipuaiform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/zhipuai-ai'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/zhipuai-ai'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -119,9 +118,9 @@ class Ui_zhipuaiform(object):
         self.zhipu_model.clear()
         self.zhipu_model.addItems(allmodels)
         self.edit_allmodels.setPlainText(allmodels_str)
-        self.zhipu_key.setText(params.get("zhipu_key",''))
+        self.zhipu_key.setText(str(params.get("zhipu_key",'')))
         self.zhipu_model.setCurrentText(params.get("zhipu_model",''))
-        self.max_token.setText(params.get("zhipu_max_token",''))
+        self.max_token.setText(str(params.get("zhipu_max_token",'')))
     def retranslateUi(self, zhipuaiform):
         zhipuaiform.setWindowTitle(tr("Zhipu AI"))
         self.label_2.setText(tr("SK"))

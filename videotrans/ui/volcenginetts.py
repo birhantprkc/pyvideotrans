@@ -3,9 +3,8 @@
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
-
 from videotrans.configure.config import tr, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_volcengineform(object):
@@ -116,7 +115,7 @@ class Ui_volcengineform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/volcenginetts'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/volcenginetts'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -126,9 +125,9 @@ class Ui_volcengineform(object):
         self.retranslateUi(volcengineform)
         QtCore.QMetaObject.connectSlotsByName(volcengineform)
     def update_ui(self):
-        self.volcenginetts_appid.setText(params.get("volcenginetts_appid",''))
-        self.volcenginetts_access.setText(params.get("volcenginetts_access",''))
-        self.volcenginetts_cluster.setText(params.get("volcenginetts_cluster",''))
+        self.volcenginetts_appid.setText(str(params.get("volcenginetts_appid",'')))
+        self.volcenginetts_access.setText(str(params.get("volcenginetts_access",'')))
+        self.volcenginetts_cluster.setText(str(params.get("volcenginetts_cluster",'')))
     def retranslateUi(self, volcengineform):
         volcengineform.setWindowTitle(tr("Volcengine TTS Setting"))
         self.label.setText("App id")

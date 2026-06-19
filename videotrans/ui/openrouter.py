@@ -3,9 +3,8 @@
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
-
 from videotrans.configure.config import tr, settings, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_openrouterform(object):
@@ -112,7 +111,7 @@ class Ui_openrouterform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/openrouter-ai'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/openrouter-ai'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -130,9 +129,9 @@ class Ui_openrouterform(object):
         self.openrouter_model.addItems(allmodels)
         self.edit_allmodels.setPlainText(allmodels_str)
 
-        self.openrouter_key.setText(params.get("openrouter_key",''))
+        self.openrouter_key.setText(str(params.get("openrouter_key",'')))
         self.openrouter_model.setCurrentText(params.get("openrouter_model",''))
-        self.max_token.setText(params.get("openrouter_max_token",''))
+        self.max_token.setText(str(params.get("openrouter_max_token",'')))
         self.reasoning_effort.setCurrentText(params.get("openrouter_reasoning_effort","No"))
 
     def retranslateUi(self, openrouterform):

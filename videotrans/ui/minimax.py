@@ -5,7 +5,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 from videotrans.configure.config import tr, settings, params
-from videotrans.util import tools
+from videotrans.util.help_misc import open_url
 
 
 class Ui_minimaxform(object):
@@ -113,7 +113,7 @@ class Ui_minimaxform(object):
         help_btn.setObjectName("help_btn")
         help_btn.setCursor(Qt.PointingHandCursor)
         help_btn.setText(tr("Fill out the tutorial"))
-        help_btn.clicked.connect(lambda: tools.open_url(url='https://pyvideotrans.com/minimaxi'))
+        help_btn.clicked.connect(lambda: open_url(url='https://pyvideotrans.com/minimaxi'))
 
         h4.addWidget(self.set)
         h4.addWidget(self.test)
@@ -132,7 +132,7 @@ class Ui_minimaxform(object):
         self.minimax_model.addItems(allmodels)
         self.edit_allmodels.setPlainText(allmodels_str)
 
-        self.minimax_key.setText(params.get("minimax_key",''))
+        self.minimax_key.setText(str(params.get("minimax_key",'')))
         self.minimax_api.setText(params.get("minimax_api",''))
         self.max_token.setText(str(params.get("minimax_max_tokens",'8192')))
         self.minimax_model.setCurrentText(params.get("minimax_model",''))

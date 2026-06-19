@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging,json
 import re
-import time
+import time,httpcore,httpx
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Union
-from openai import OpenAI, NotFoundError, AuthenticationError, PermissionDeniedError,BadRequestError
+from openai import OpenAI, LengthFinishReasonError,NotFoundError, AuthenticationError, PermissionDeniedError,BadRequestError,APIConnectionError,APIError
 from tenacity import before_log, retry_if_not_exception_type, wait_fixed, stop_after_attempt, after_log, retry
 
 from videotrans.configure.excepts import NO_RETRY_EXCEPT, TranslateSrtError, LLMSegmentError, StopTask
 from videotrans.configure.config import logger, settings, params, ROOT_DIR, tr
 from videotrans.task.taskcfg import SrtItem
 from videotrans.translator._base import BaseTrans
-from openai import LengthFinishReasonError
 
 from videotrans.util import tools
 
@@ -68,10 +67,16 @@ class OpenAICampat(BaseTrans):
         try:
             model = OpenAI(api_key=self.api_key, base_url=self.api_url)
             response = model.chat.completions.create(**kwargs, extra_body=self.extra_body)
+        except APIConnectionError as e:
+            raise StopTask(f'[{self.ainame}] {tr("Unable to connect to API",self.api_url)}\n{e.message}') from e
         except (NotFoundError,AuthenticationError,PermissionDeniedError,BadRequestError) as e:
             del kwargs['messages']
             raise StopTask(e.message+f'\n{self.api_url}\n{kwargs}') from e
-
+        except APIError as e: 
+            if re.search(r"insufficient.*?balance",e.message,flags=re.I):
+                raise StopTask(tr('The server returned an error message: Insufficient balance',tools.get_tanslate_type(self.translate_type),self.api_url))
+            raise
+            
         result = ""
         if not hasattr(response,'choices') or not response.choices:
             raise TranslateSrtError(str(response))
@@ -87,13 +92,13 @@ class OpenAICampat(BaseTrans):
         return result.strip()
 
 
-    def llm_segment(self, srt_list)->List[SrtItem]:
+    def llm_segment(self, srt_list,step='')->List[SrtItem]:
         _st=time.time()
         api_url=params.get('chatgpt_api') if self.ainame!='deepseek' else 'https://api.deepseek.com/v1/'
         if len(api_url)<10:
             raise StopTask(f'API URL is error: {api_url}')
 
-        prompts_template = Path(ROOT_DIR + '/videotrans/prompts/recharge/recharge-llm.txt').read_text(encoding='utf-8')
+        prompts_template = Path(f'{ROOT_DIR}/videotrans/prompts/recharge/recharge-llm{step}.txt').read_text(encoding='utf-8')
         prompts_template = prompts_template.replace('{max_speech_s}', str(settings.get('max_speech_duration_s', 6)))
         chunk_size = int(settings.get('llm_chunk_size', 20))
         model_name=params.get(f'{self.ainame}_model')
@@ -148,8 +153,8 @@ class OpenAICampat(BaseTrans):
             if match:
                 return match.group(1)
             return result.strip()
-
-        logger.debug(f'LLM重新断句:{self.ainame=},{model_name=},{api_url=}')
+        
+        logger.debug(f'LLM断句:{self.ainame=},{model_name=},{api_url=}')
         new_sublist = []
         for idx in range(0, len(srt_list), chunk_size):
             self.signal(text=f'[{idx}] {self.ainame} ' + tr("Re-segmenting..."))
@@ -172,5 +177,5 @@ class OpenAICampat(BaseTrans):
                 it['startraw'] = tools.ms_to_time_string(ms=it['start_time'])
                 it['endraw'] = tools.ms_to_time_string(ms=it['end_time'])
                 it["time"] = f"{it['startraw']} --> {it['endraw']}"
-        logger.debug(f'LLM重新断句完成,原始字幕行:{len(srt_list)}, 新字幕行:{len(_srtlist)}, 用时:{time.time()-_st}s')
+        logger.debug(f'{"【二次识别后】"  if step else ""}LLM重新断句完成,原始字幕行:{len(srt_list)}, 新字幕行:{len(_srtlist)}, 用时:{time.time()-_st}s')
         return _srtlist
