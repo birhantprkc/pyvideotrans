@@ -1,8 +1,10 @@
 import requests
 try:
-    requests.get('http://127.0.0.1:9880')
-    
-    
-except requests.exceptions.ConnectionError as e:
-    if "Failed to establish a new connection" in str(e):
-        print('需要部署并启动')
+    res=requests.head("https://www.google.com",proxies={'https':'sock://127.0.0.1:10808'})    
+    #res=requests.head("https://www.google.com",proxies={'https':'sock://127.0.0.1:10808'})    
+    #res=requests.head("https://www.google.com",proxies={"https":""})    
+    print(f'{res=}')
+except Exception as e:
+    print("#########")
+    print(e)
+    print("#########")

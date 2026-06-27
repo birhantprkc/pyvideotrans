@@ -820,7 +820,7 @@ wheels = [
 
 [[package]]
 name = "ctranslate2"
-version = "4.6.0"
+version = "4.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
@@ -828,11 +828,11 @@ dependencies = [
     { name = "setuptools" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/ea/4d8f098c96873196ed87cfcd0bdb65a4b1783d18030e84633bc965241ae1/ctranslate2-4.6.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:aeadeb7fd11f37ec96b40952402ce35ee7d214b09e1634fb11934f7d5e4ad1d7", size = 13300930, upload-time = "2025-04-08T19:49:23.629Z" },
-    { url = "https://files.pythonhosted.org/packages/ba/9c/22417d43afc919e66f8218d6da4496bbff43636405902b4f53484ec801db/ctranslate2-4.6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:b5da5eee549db5137e9082fa7b479bd8bf273d9a961afdf3f8ecff2527fdf71e", size = 1289916, upload-time = "2025-04-08T19:49:27.019Z" },
-    { url = "https://files.pythonhosted.org/packages/ad/38/e8121d6e29cee029ab21be01612a173dcf62a93324e43197f7b0d122645b/ctranslate2-4.6.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6ed15383afc9d4e448d4090389f06c141a5ce1510e610c1aa7021332cfbc97f1", size = 17185979, upload-time = "2025-04-08T19:49:28.517Z" },
-    { url = "https://files.pythonhosted.org/packages/8d/bc/a342f732a48258d0c9ae6d08f007e792705bc371e0ed93cf499ffc28f80c/ctranslate2-4.6.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0ac5a714890e9f5f6876005c8a8fb2bdf9bec88437c38ff3efd71bd65333519d", size = 38445253, upload-time = "2025-04-08T19:49:30.942Z" },
-    { url = "https://files.pythonhosted.org/packages/23/e3/591b46613582baea22de7308af3b10fd2188f177856282745771ff954319/ctranslate2-4.6.0-cp310-cp310-win_amd64.whl", hash = "sha256:f99502996361f7dc35f00b95a01e414c8d8ff75b8a58da97e378ceb5560689ae", size = 19466268, upload-time = "2025-04-08T19:49:33.486Z" },
+    { url = "https://files.pythonhosted.org/packages/36/6b/7329ff26a4bdfb1b395cf4dfb2b057ebe3881c5fe91f2022634689754fb8/ctranslate2-4.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e66b5dc33e94a05dfe0fcdf6ab17dfe6e0335017cc6a315de044214063b1c533", size = 1268221, upload-time = "2026-06-06T19:17:27.597Z" },
+    { url = "https://files.pythonhosted.org/packages/db/3e/4e3289f428f51bbf12fd77a708a430dc1792375bd924c2c7cbaecc6e6d83/ctranslate2-4.8.0-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:f25566e056d1fa9da47d6e374b2d04d6a6dfa0b631e52687a0bc4101633ecb53", size = 11925104, upload-time = "2026-06-06T19:17:29.966Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/fa/b220fc42f38b8fd8f938d6621436fceea136cb5aad4c6a6f9f125e2755ba/ctranslate2-4.8.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:65e64a5d79de82f302677b7ac07d3a540f893657c33fb0196824db87a17e4900", size = 16554877, upload-time = "2026-06-06T19:17:33.36Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/85/d562b84d31ec28f5ddf1b49444d706b033075d42aaf656b8afea3120468f/ctranslate2-4.8.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c4c8b9dc6bd8a3e79fa4109fa918e1c563b533e84a1e6c96eda6ff57cfee17f4", size = 39150038, upload-time = "2026-06-06T19:17:37.677Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/b7/f6f6c3e5c175b10a48e949bc46c42a58f88647702ce1975e29fd6e45a5e2/ctranslate2-4.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:b55976b0248d62aacce4e3569b0555ec2861d77b8b334ed03eaf757f51d0492d", size = 19216424, upload-time = "2026-06-06T19:17:41.401Z" },
 ]
 
 [[package]]
@@ -1747,6 +1747,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[package.optional-dependencies]
+socks = [
+    { name = "socksio" },
 ]
 
 [[package]]
@@ -3632,6 +3637,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pysocks"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/11/293dd436aea955d45fc4e8a35b6ae7270f5b8e00b53cf6c024c83b657a11/PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0", size = 284429, upload-time = "2019-09-20T02:07:35.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/59/b4572118e098ac8e46e399a1dd0f2d85403ce8bbaad9ec79373ed6badaf9/PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5", size = 16725, upload-time = "2019-09-20T02:06:22.938Z" },
+]
+
+[[package]]
 name = "pysoundfile"
 version = "0.9.0.post1"
 source = { registry = "https://pypi.org/simple" }
@@ -3874,7 +3888,7 @@ dependencies = [
     { name = "hstspreload" },
     { name = "httpcore" },
     { name = "httplib2" },
-    { name = "httpx" },
+    { name = "httpx", extra = ["socks"] },
     { name = "huggingface" },
     { name = "huggingface-hub" },
     { name = "humanfriendly" },
@@ -3884,6 +3898,7 @@ dependencies = [
     { name = "imageio" },
     { name = "imageio-ffmpeg" },
     { name = "importlib-metadata" },
+    { name = "importlib-resources" },
     { name = "inflate64" },
     { name = "ipython" },
     { name = "iso639-lang" },
@@ -3977,7 +3992,7 @@ dependencies = [
     { name = "pyzstd" },
     { name = "qdarkstyle" },
     { name = "regex" },
-    { name = "requests" },
+    { name = "requests", extra = ["socks"] },
     { name = "requests-oauthlib" },
     { name = "resampy" },
     { name = "rfc3986" },
@@ -4020,6 +4035,7 @@ dependencies = [
     { name = "torchaudio", version = "2.7.1", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
     { name = "torchaudio", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
     { name = "torchaudio", version = "2.7.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or sys_platform == 'win32'" },
+    { name = "torchcodec" },
     { name = "tqdm" },
     { name = "transformers" },
     { name = "typer" },
@@ -4044,7 +4060,6 @@ dotnet = [
     { name = "pythonnet" },
 ]
 mosstts = [
-    { name = "importlib-resources" },
     { name = "pynini" },
     { name = "wetextprocessing" },
 ]
@@ -4118,7 +4133,7 @@ requires-dist = [
     { name = "contourpy", specifier = "==1.1.1" },
     { name = "crcmod", specifier = "==1.7" },
     { name = "cryptography", specifier = "==45.0.4" },
-    { name = "ctranslate2", specifier = "==4.6.0" },
+    { name = "ctranslate2", specifier = "==4.8" },
     { name = "cycler", specifier = "==0.12.1" },
     { name = "dashscope", specifier = "==1.25.5" },
     { name = "dataclasses-json", specifier = "==0.6.7" },
@@ -4169,7 +4184,7 @@ requires-dist = [
     { name = "hstspreload", specifier = "==2023.1.1" },
     { name = "httpcore", specifier = "==1.0.6" },
     { name = "httplib2", specifier = "==0.22.0" },
-    { name = "httpx", specifier = "==0.28.1" },
+    { name = "httpx", extras = ["socks"], specifier = "==0.28.1" },
     { name = "huggingface", specifier = "==0.0.1" },
     { name = "huggingface-hub", specifier = "==0.35.3" },
     { name = "humanfriendly", specifier = "==10.0" },
@@ -4179,7 +4194,7 @@ requires-dist = [
     { name = "imageio", specifier = "==2.31.4" },
     { name = "imageio-ffmpeg", specifier = "==0.4.9" },
     { name = "importlib-metadata", specifier = "==8.7.0" },
-    { name = "importlib-resources", marker = "extra == 'mosstts'" },
+    { name = "importlib-resources" },
     { name = "inflate64", specifier = "==1.0.0" },
     { name = "ipython", specifier = "==8.23.0" },
     { name = "iso639-lang", specifier = "==2.2.3" },
@@ -4277,7 +4292,7 @@ requires-dist = [
     { name = "qwen-asr", marker = "extra == 'qwenasr'" },
     { name = "qwen-tts", marker = "extra == 'qwentts'" },
     { name = "regex" },
-    { name = "requests", specifier = "==2.32.5" },
+    { name = "requests", extras = ["socks"], specifier = "==2.32.5" },
     { name = "requests-oauthlib", specifier = "==1.3.1" },
     { name = "resampy", specifier = "==0.4.2" },
     { name = "rfc3986", specifier = "==1.5.0" },
@@ -4319,6 +4334,7 @@ requires-dist = [
     { name = "torchaudio", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'", specifier = "==2.7.1" },
     { name = "torchaudio", marker = "sys_platform == 'darwin'", specifier = "==2.7.1", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torchaudio", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "torchcodec", specifier = ">=0.14.0" },
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "transformers", specifier = "==4.57.6" },
     { name = "typer", specifier = "==0.19.2" },
@@ -4516,6 +4532,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
+]
+
+[package.optional-dependencies]
+socks = [
+    { name = "pysocks" },
 ]
 
 [[package]]
@@ -4888,6 +4909,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372, upload-time = "2024-02-25T23:20:04.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235, upload-time = "2024-02-25T23:20:01.196Z" },
+]
+
+[[package]]
+name = "socksio"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/5c/48a7d9495be3d1c651198fd99dbb6ce190e2274d0f28b9051307bdec6b85/socksio-1.0.0.tar.gz", hash = "sha256:f88beb3da5b5c38b9890469de67d0cb0f9d494b78b106ca1845f96c10b91c4ac", size = 19055, upload-time = "2020-04-17T15:50:34.664Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/c3/6eeb6034408dac0fa653d126c9204ade96b819c936e136c5e8a6897eee9c/socksio-1.0.0-py3-none-any.whl", hash = "sha256:95dc1f15f9b34e8d7b16f06d74b8ccf48f609af32ab33c608d08761c5dcbb1f3", size = 12763, upload-time = "2020-04-17T15:50:31.878Z" },
 ]
 
 [[package]]
@@ -5462,6 +5492,17 @@ dependencies = [
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu128/torchaudio-2.7.1%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:2ba0816eee659e343851a9c5dc60c8e1eb819a3969b29268fab27d3143273d78", upload-time = "2025-06-03T18:37:40Z" },
     { url = "https://download-r2.pytorch.org/whl/cu128/torchaudio-2.7.1%2Bcu128-cp310-cp310-win_amd64.whl", hash = "sha256:b1e56a999a06a5deaebfb991dc676aaa60d98139907d99badbc6dca6456637ee", upload-time = "2025-06-03T18:37:40Z" },
+]
+
+[[package]]
+name = "torchcodec"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/30/d6257240ca902a03c6834199246646d63cbf338aa045dc2a9299abc57085/torchcodec-0.14.0-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:492e08a606b4fa99cf04337affd2368aef7d598880feff8dffa420da8fa614cb", size = 3916333, upload-time = "2026-06-03T12:41:24.28Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/ce/8a6b5557051bbfba80de121b2b84ddbc8f1a88f08c772b608e70d3998dd4/torchcodec-0.14.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:a68a8247c8ddd2a5390ac1b03b12f0bd1db4a43bcaacd274b4c6dce546a82bf6", size = 2664669, upload-time = "2026-06-03T12:41:25.901Z" },
+    { url = "https://files.pythonhosted.org/packages/55/e1/1c3f7d53cc52f9a2b2490d16ed1d55f6142f049141d2d3039db09b0c67a3/torchcodec-0.14.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:90fb2c547c0a7510236d7dc1ff74683ec40dbab76fddd1f771a29fd33cdbcc6f", size = 2918478, upload-time = "2026-06-03T12:41:27.481Z" },
+    { url = "https://files.pythonhosted.org/packages/32/2b/a301155f38fa951e91366d8dbd9cdc7d4a018f6352d7a68e5016683cee40/torchcodec-0.14.0-cp310-cp310-win_amd64.whl", hash = "sha256:fe875e2d2474abe1ef95fef4188a7a8b7d7cfdb70bb7a89ff6a9154e7c378f94", size = 3123182, upload-time = "2026-06-03T12:41:29.033Z" },
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-> Sponsors: **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans) - Meeting Transcription API**
+﻿> Sponsors: **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans) - Meeting Transcription API**
 >
 > If you’re looking for a transcription API for meetings, consider checking out **[Recall.ai](https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=jianchang512-pyvideotrans)** , an API that works with Zoom, Google Meet, Microsoft Teams, and more
 
@@ -11,7 +11,7 @@
 
 **一款强大的开源视频翻译 / 语音转录 / AI配音 / 字幕翻译工具**
 
-[English](../README.md) | [**文档**](https://pyvideotrans.com) | [**在线问答**](https://bbs.pyvideotrans.com) | [**WebUI 说明**](webui.md)
+[English](../README.md) | [**文档**](https://pyvideotrans.com) | [**在线问答**](https://bbs.pyvideotrans.com) 
 
 [![License](https://img.shields.io/badge/License-GPL_v3-blue.svg)](../LICENSE) [![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://www.python.org/) [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
 
@@ -124,6 +124,23 @@ uv sync --extra webui
 uv run webui.py
 ```
 
+
+**Docker 部署** (容器化部署):
+```bash
+# 构建镜像
+docker build -t pyvideotrans-webui .
+
+# 运行
+docker run -d -p 7860:7860 --name pyvideotrans pyvideotrans-webui
+
+# 持久化配置和输出
+docker run -d -p 7860:7860 \
+  -v ./data/output:/app/output \
+  -v ./data/config:/app/videotrans \
+  --name pyvideotrans pyvideotrans-webui
+```
+
+> [WebUI 使用说明](webui.md)
 > [WebUI 使用说明](webui.md)
 
 ### 5. (可选) GPU 加速配置
@@ -187,3 +204,5 @@ uv add nvidia-cublas-cu12 nvidia-cudnn-cu12
 ---
 
 *Created by [jianchang512](https://github.com/jianchang512)*
+
+
