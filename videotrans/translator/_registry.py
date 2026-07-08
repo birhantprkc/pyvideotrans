@@ -6,13 +6,14 @@ from videotrans.translator._constants import (
     OPENROUTER_INDEX, SILICONFLOW_INDEX, AI302_INDEX,
     QWENMT_INDEX, ZIJIE_INDEX,
     TENCENT_INDEX, BAIDU_INDEX, DEEPL_INDEX, DEEPLX_INDEX, ALI_INDEX,
-    LIBRE_INDEX, MINIMAX_INDEX, XIAOMI_INDEX, CAMB_INDEX, TRANSAPI_INDEX,
+    LIBRE_INDEX, MINIMAX_INDEX, XIAOMI_INDEX, CAMB_INDEX, TRANSAPI_INDEX,HYMT2_INDEX
 )
 
 _ID_NAME_DICT = {
     GOOGLE_INDEX: ChannelProvider(tr('Google'), imp="._google"),
     MICROSOFT_INDEX: ChannelProvider(tr('Microsoft'), imp="._microsoft"),
     M2M100_INDEX: ChannelProvider(f'M2M100({tr("Local")}{tr("Built-in")})', imp="._m2m100"),
+    HYMT2_INDEX: ChannelProvider(f'Hy-MT2-1.8B({tr("Local")}{tr("Built-in")})', imp="._hymt2"),
 
     CHATGPT_INDEX: ChannelProvider(tr('OpenAI ChatGPT'),  key_name="chatgpt_key", win="chatgpt", imp="._chatgpt"),
     DEEPSEEK_INDEX: ChannelProvider("DeepSeek", key_name="deepseek_key", win="deepseek", imp="._deepseek"),
@@ -36,7 +37,7 @@ _ID_NAME_DICT = {
 
     LIBRE_INDEX: ChannelProvider(f"{tr('LibreTranslate')}({tr('Local')}API)", key_name="libre_address", win="libre", imp="._libre"),
     MINIMAX_INDEX: ChannelProvider("MiniMax AI", key_name="minimax_key", win="minimax", imp="._minimax"),
-    XIAOMI_INDEX: ChannelProvider("XiaoMi AI", key_name="xiaomi_key", win="xiaomi", imp="._xiaomi"),
+    XIAOMI_INDEX: ChannelProvider(tr("XiaoMi"), key_name="xiaomi_key", win="xiaomi", imp="._xiaomi"),
     CAMB_INDEX: ChannelProvider("CAMB AI", key_name="camb_api_key", win="cambtts", imp="._camb"),
     TRANSAPI_INDEX: ChannelProvider(tr('Customized API'), key_name="trans_api_url", win="transapi", imp="._transapi"),
 }

@@ -9,15 +9,15 @@ EDGE_TTS = 0
 # 本地内置
 QWEN3LOCAL_TTS = 1
 F5_TTS = 2
-MOSS_TTS = 3
-ZIPVOICE_TTS = 4
-PIPER_TTS = 5
-CHATTERBOX_TTS = 6
-Supertonic_TTS = 7
-VITSCNEN_TTS = 8
+OMNIVOICE_TTS = 3
+MOSS_TTS = 4
+ZIPVOICE_TTS = 5
+PIPER_TTS = 6
+CHATTERBOX_TTS = 7
+Supertonic_TTS = 8
+VITSCNEN_TTS = 9
 
 # 本地 API
-OMNIVOICE_TTS = 9
 INDEX_TTS = 10
 GPTSOVITS_TTS = 11
 COSYVOICE_TTS = 12
@@ -79,6 +79,7 @@ _ID_NAME_DICT = {
     EDGE_TTS: ChannelProvider(tr("Edge-TTS(free)"), "._edgetts"),
     QWEN3LOCAL_TTS: ChannelProvider(f"Qwen3-TTS({tr('Local')}{tr('Built-in')})", "._qwenttslocal"),
     F5_TTS: ChannelProvider(f"F5-TTS({tr('Local')}{tr('Built-in')})", "._f5tts"),
+    OMNIVOICE_TTS: ChannelProvider(f"OmniVoice({tr('Local')}{tr('Built-in')})", "._omnivoice"),
     MOSS_TTS: ChannelProvider(f"MOSS-TTS-Nano({tr('Local')}{tr('Built-in')})", "._mosstts"),
     ZIPVOICE_TTS: ChannelProvider(f"{tr('ZipVoice')}({tr('Local')}{tr('Built-in')})", "._zipvoice"),
     PIPER_TTS: ChannelProvider(f"Piper({tr('Local')}{tr('Built-in')})", "._piper"),
@@ -87,7 +88,6 @@ _ID_NAME_DICT = {
     VITSCNEN_TTS: ChannelProvider(f"{tr('VITS')}({tr('Local')}{tr('Built-in')})", "._vits"),
 
     
-    OMNIVOICE_TTS: ChannelProvider(f"OmniVoice({tr('Local')}API)", "._omnivoice", key_name="omnivoice_url",   win="omnivoice"),
     INDEX_TTS: ChannelProvider(f"Index-TTS({tr('Local')}API)", "._index", key_name="indextts_url", win="gradiowin"),
     GPTSOVITS_TTS: ChannelProvider(f"GPT-SoVITS({tr('Local')}API)", "._gptsovits", key_name="gptsovits_url", win="gptsovits"),
     COSYVOICE_TTS: ChannelProvider(f"CosyVoice({tr('Local')}API)", "._cosyvoice", key_name="cosyvoice_url",  win="cosyvoice"),
@@ -96,7 +96,7 @@ _ID_NAME_DICT = {
 
     DOUBAO2_TTS: ChannelProvider(tr("DouBao2"), "._doubao2", key_name="doubao2_access", win="doubao2"),
     QWEN_TTS: ChannelProvider("Qwen3-TTS", "._qwentts", key_name="qwentts_key", win="qwentts"),
-    XIAOMI_TTS: ChannelProvider('XiaoMi-TTS', "._xiaomi", key_name="xiaomi_key", win="mitts"),
+    XIAOMI_TTS: ChannelProvider(tr('XiaoMi'), "._xiaomi", key_name="xiaomi_key", win="xiaomi"),
     GLM_TTS: ChannelProvider(f'GLM-TTS {tr("Zhipu AI")}', "._glmtts", key_name="zhipu_key", win="zhipuai"),
     MINIMAXI_TTS: ChannelProvider("Minimaxi-TTS", "._minimaxi", key_name="minimaxi_apikey", win="minimaxi"),
 
