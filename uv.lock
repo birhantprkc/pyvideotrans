@@ -926,17 +926,22 @@ wheels = [
 
 [[package]]
 name = "dashscope"
-version = "1.25.5"
+version = "1.26.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "certifi" },
     { name = "cryptography" },
+    { name = "httpx" },
+    { name = "httpx-sse" },
     { name = "requests" },
+    { name = "rich" },
+    { name = "typer" },
     { name = "websocket-client" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/36/66/23894b267d5811299a1a40ecc38302525b27c198c071f37c832341d28d92/dashscope-1.26.2.tar.gz", hash = "sha256:2ab2b6059872bde4fef2f1d77268ddc21bad09ad282cace266437eda526c3932", size = 1420273, upload-time = "2026-07-02T08:20:24.353Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/91/60f5353c8752d8ce489f4baeb252999d4cfb1a784c0beda34b5287135d65/dashscope-1.25.5-py3-none-any.whl", hash = "sha256:1be9eebaf1e7327317a22db9233770f4252463b926c84071ffd8805ae06cf998", size = 1323186, upload-time = "2025-12-18T02:15:26.462Z" },
+    { url = "https://files.pythonhosted.org/packages/58/a8/871ad5eb563a50dfd059b1865f149e42176d245341a9a890a3468b2a6369/dashscope-1.26.2-py3-none-any.whl", hash = "sha256:6ca4eefc34bcfd54cc58a58aac6ba4a1dfdb65906a599a2b436ccc8ba08d9cbd", size = 1522086, upload-time = "2026-07-02T08:20:21.583Z" },
 ]
 
 [[package]]
@@ -2025,6 +2030,15 @@ wheels = [
 [package.optional-dependencies]
 socks = [
     { name = "socksio" },
+]
+
+[[package]]
+name = "httpx-sse"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/4c/751061ffa58615a32c31b2d82e8482be8dd4a89154f003147acee90f2be9/httpx_sse-0.4.3.tar.gz", hash = "sha256:9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d", size = 15943, upload-time = "2025-10-10T21:48:22.271Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/fd/6668e5aec43ab844de6fc74927e155a3b37bf40d7c3790e49fc0406b6578/httpx_sse-0.4.3-py3-none-any.whl", hash = "sha256:0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc", size = 8960, upload-time = "2025-10-10T21:48:21.158Z" },
 ]
 
 [[package]]
@@ -4498,7 +4512,7 @@ requires-dist = [
     { name = "cryptography", specifier = "==45.0.4" },
     { name = "ctranslate2", specifier = "==4.8" },
     { name = "cycler", specifier = "==0.12.1" },
-    { name = "dashscope", specifier = "==1.25.5" },
+    { name = "dashscope" },
     { name = "dataclasses-json", specifier = "==0.6.7" },
     { name = "datasets", specifier = "==3.0.0" },
     { name = "decorator", specifier = "==5.2.1" },
@@ -4626,7 +4640,7 @@ requires-dist = [
     { name = "psutil", specifier = "==6.0.0" },
     { name = "pure-eval", specifier = "==0.2.2" },
     { name = "py7zr", specifier = "==0.22.0" },
-    { name = "pyannote-audio", specifier = "==3.4.0" },
+    { name = "pyannote-audio" },
     { name = "pyarrow", specifier = "==20.0.0" },
     { name = "pyasn1", specifier = "==0.5.0" },
     { name = "pyasn1-modules", specifier = "==0.3.0" },
@@ -6059,7 +6073,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/42/c2/65f13aec253100e19
 
 [[package]]
 name = "transformers4576"
-version = "4.57.6"
+version = "4.57.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -6073,9 +6087,9 @@ dependencies = [
     { name = "tokenizers" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/85/44a4ca10cc0d37b647c290e23b4b1230de15067a6314a263f27c611131ef/transformers4576-4.57.6.tar.gz", hash = "sha256:13ad2bfc286008fab97b5d7eb087bfeac5b4cb8b5ed1475fb963ae0085386e5d", size = 10143168, upload-time = "2026-07-06T03:15:38.068Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/d8/f08e2572081d5fae9186e743bcfec2efc38775cf4ab277422aca3085ea6a/transformers4576-4.57.6.1.tar.gz", hash = "sha256:f6851fe3be5e1175436e41260f00e4d3923481aada0a8e580defc70b117f94cb", size = 9931986, upload-time = "2026-07-09T04:07:37.99Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/06/389abffe77121b9540a6abeab01ba345ca4236135ab631bdb714055c2f66/transformers4576-4.57.6-py3-none-any.whl", hash = "sha256:90528143b5badaae8b8c8189605cfac33ac0dfd7bda728a8cbb6bb11add1e9b1", size = 12018876, upload-time = "2026-07-06T03:15:21.463Z" },
+    { url = "https://files.pythonhosted.org/packages/db/08/29be74f4ee1331343ed998c500b37c7d30f57591b87288d0b5772bb5f02c/transformers4576-4.57.6.1-py3-none-any.whl", hash = "sha256:67ebce1c400a11221441ca690bdeb07644c74085f0b4ccc4ebdfd30f797e74cb", size = 12019082, upload-time = "2026-07-09T04:07:19.612Z" },
 ]
 
 [[package]]
