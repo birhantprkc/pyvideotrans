@@ -52,7 +52,7 @@ class MainWindow(BindSignalsMixin, WinformMixin, LifecycleMixin, QMainWindow, Ui
         s = AiLoaderThread(self)
         s.gpu_io.connect(self._start_workers)
         self.startbtn.setDisabled(True)
-        self.startbtn.setText('Checking GPUs...')
+        self.startbtn.setText(tr('Checking GPUs...'))
         s.start()
         self._set_default()
 
@@ -136,7 +136,7 @@ class MainWindow(BindSignalsMixin, WinformMixin, LifecycleMixin, QMainWindow, Ui
         self.recogn2pass.setChecked(bool(params.get('recogn2pass', False)))
         self.only_out_mp4.setChecked(bool(params.get('only_out_mp4', False)))
         self.remove_silent_mid.setChecked(bool(params.get('remove_silent_mid', False)))
-        self.align_sub_audio.setChecked(bool(params.get('align_sub_audio', False)))
+        self.align_sub_audio.setChecked(bool(params.get('align_sub_audio', True)))
         self.clear_cache.setChecked(bool(params.get('clear_cache', False)))
         self.enable_cuda.setChecked(bool(params.get('is_cuda', False)))
         self.enable_diariz.setChecked(bool(params.get('enable_diariz', False)))

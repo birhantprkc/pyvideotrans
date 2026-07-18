@@ -1,5 +1,5 @@
 # 执行单个视频翻译任务时 暂停等待
-import json
+import json,re
 import time
 import traceback
 from pathlib import Path
@@ -37,11 +37,12 @@ class Worker(QThread):
             trk = TransCreate(cfg=TaskCfgVTT(**self.cfg | self.file))
             # 原始语言字幕文件
             app_cfg.onlyone_source_sub = trk.cfg.source_sub
+            # 如果存在原始字幕，并且字幕第一条开头存在说话人标识 \[(spk|speakers?)\s*?\d+\]
+            # 则取出所有说话人，不存在的以第一条的为默认，然后从字幕中删除
             # 目标语言字幕文件
             app_cfg.onlyone_target_sub = trk.cfg.target_sub
-            if self._exit(): return
             app_cfg.set_countdown(0)
-            trk.prepare()
+            trk.prepare()                           
             if self._exit(): return
             trk.recogn()
             if self._exit(): return

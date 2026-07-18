@@ -27,12 +27,13 @@ class PiperTTS(BaseTTS):
         super().__post_init__()
         self.speed=self.get_speed()
         self.device="cpu"# todo cuda
+        self.local_dir=f'{ROOT_DIR}/models/piper'
         
     def _get_model_from_name(self,name):
         # 角色名转为 piper文件夹下的子文件夹名
         name_path=name.split('_')[0]+'/'+name.replace('-','/')
         # 存放onnx文件的最终文件夹绝对路径
-        local_dir=ROOT_DIR+'/models/piper/'+name_path
+        local_dir=f'{self.local_dir}/'+name_path
         onnx_file=f'{local_dir}/{name}.onnx'
         if Path(onnx_file).exists():
             return onnx_file
@@ -45,7 +46,14 @@ class PiperTTS(BaseTTS):
         tools.down_file_from_hf(local_dir,urls=urls,callback=self._process_callback)
         return onnx_file
     
-
+    def _download(self):
+        if not Path(f'{ROOT_DIR}/models/g2pW/g2pw.onnx').exists():
+            self.signal(text="Downloading G2PWModel-v2...")
+            
+            tools.down_zip(f"{ROOT_DIR}/models",
+                           'https://modelscope.cn/models/himyworld/videotrans/resolve/master/G2PWModel-v2-onnx.zip',
+                           self._process_callback)
+        return True
     
     def _exec(self):
         # 判断模型是否存在
@@ -69,7 +77,7 @@ class PiperTTS(BaseTTS):
                 _model_file=role_model.get(item['role'])
                 voice=_model_obj.get(_model_file)
                 if voice is None:
-                    voice = PiperVoice.load(_model_file,use_cuda=True if self.device=='cuda' else False)
+                    voice = PiperVoice.load(_model_file,use_cuda=True if self.device=='cuda' else False,download_dir=f'{ROOT_DIR}/models')
                     _model_obj[_model_file]=voice
                 with wave.open(item['filename']+'-24k.wav', "wb") as wav_file:
                     voice.synthesize_wav(item.get('text'), wav_file,syn_config=syn_config)

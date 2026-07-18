@@ -80,6 +80,7 @@ class AssembleMixin:
         if self._exit() or not self.should_hebing:
             return
         
+        self.signal(text="Checking novoice.mp4...")
         is_novoice_mp4(self.cfg.novoice_mp4, self.uuid)
         if not Path(self.cfg.novoice_mp4).exists():
             raise VideoTransError(f'{self.cfg.novoice_mp4} 不存在')
@@ -92,7 +93,10 @@ class AssembleMixin:
         target_m4a = self.cfg.cache_folder + "/will_embed.m4a"
         output_source_output = True
         duration_ms = int(get_video_duration(self.cfg.novoice_mp4))
+        # 如果视频时长大于音频时长，音频末尾补静音，后续不再判断音频是否大于视频
+        audio_had_append=False
         if not self.should_dubbing:
+            self.signal(text="Get original sound...")
             self._get_origin_audio(target_m4a,duration_ms)
         else:
             output_source_output = False
@@ -116,8 +120,9 @@ class AssembleMixin:
                 finally:
                     output_source_output = True
             threading.Thread(target=_output, daemon=True).start()
-
+            self.signal(text="Check manually added BGM...")
             self._back_music()
+            self.signal(text="Check original BGM...")
             self._separate()
 
             audio_ms = get_audio_time(self.cfg.target_wav)
@@ -127,13 +132,16 @@ class AssembleMixin:
                 os.path.basename(self.cfg.target_wav)
             ]
             v_a_offset=duration_ms-audio_ms
+            # 视频时长大于音频超过100ms，音频末尾补静音
             if v_a_offset>100:
+                audio_had_append=True
                 logger.debug(f'视频时长{duration_ms}ms-音频时长{audio_ms}ms={v_a_offset}ms,需延长音频')
                 _cmd.extend(['-af', f'apad=pad_dur={v_a_offset/1000.0}'])
             _cmd.extend([
                 "-ac", "2", "-b:a", "128k", "-c:a", "aac",
                 os.path.basename(target_m4a)
             ])
+            self.signal(text="Process voiceover for embedding...")
             runffmpeg(_cmd, cmd_dir=self.cfg.cache_folder)
 
         shutil.copy2(target_m4a, self.cfg.target_wav_output)
@@ -141,6 +149,7 @@ class AssembleMixin:
         _video_output_ext = settings.get('out_video_ext', '.mp4')
         subtitles_file, subtitle_langcode = None, None
         if self.cfg.subtitle_type > 0:
+            self.signal(text="Organize subtitles for embedding...")
             subtitles_file, subtitle_langcode = self._process_subtitles()
 
         if _video_output_ext!='.mp4':
@@ -154,8 +163,9 @@ class AssembleMixin:
         if is_lossless:
             logger.debug(f'当前原始视频是标准264,输出也是264，未视频慢速，未嵌入硬字幕，放弃视频末尾处理，实现无损输出。音频时长-视频时长={a_v_offset}ms'+('，\n音频时长大于视频时长{a_v_offset}ms，理论上视频末尾应定格等待音频播放完毕，但不同播放器可能有不同处理方式，如音频截断，视频末尾黑屏等' if a_v_offset>0 else ''))
 
-        elif a_v_offset > 500:
+        elif a_v_offset > 500 and not audio_had_append:#只有未对音频末尾增加静音，才考虑延长视频
             try:
+                self.signal(text="Freeze end of video...")
                 self._video_extend(a_v_offset)
             except Exception as e:
                 logger.exception(f'定格视频最后一帧时失败，跳过 {e}', exc_info=True)
@@ -173,6 +183,7 @@ class AssembleMixin:
             tmp_target_mp4_basename = os.path.basename(tmp_target_mp4)
 
             if not app_cfg.video_codec:
+                self.signal(text="Check supported hardware codes...")
                 app_cfg.video_codec = get_video_codec()
 
             cmd0 = [

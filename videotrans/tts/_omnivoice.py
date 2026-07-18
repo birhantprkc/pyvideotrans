@@ -8,7 +8,7 @@ from pathlib import Path
 
 @dataclass
 class OmniVoice(BaseTTS):
-    localdir:str=None
+
     def __post_init__(self):
         super().__post_init__()
         # 语言代码 对应语言名称
@@ -97,15 +97,14 @@ class OmniVoice(BaseTTS):
         self.roledict = tools.get_f5tts_role()
         self.device='cuda' if self.is_cuda else  gpus.mps_or_cpu()
         self.lang=lang_code.get(self.language,'Auto') if self.language else 'Auto'
-        self.localdir=f'{ROOT_DIR}/models/models--k2-fsa--OmniVoice'
+        self.local_dir=f'{ROOT_DIR}/models/models--k2-fsa--OmniVoice'
 
     def _download(self):
         tools.check_and_down_hf(
                 "OmniVoice",
                 'k2-fsa/OmniVoice',
-                self.localdir,
+                self.local_dir,
                 callback=self._process_callback,
-                #allow_list=[self.cfg['model_name'],self.cfg['vocab_name']]
         )        
         return True
 
@@ -117,10 +116,11 @@ class OmniVoice(BaseTTS):
         from omnivoice import OmniVoice
         
         model = OmniVoice.from_pretrained(
-            self.localdir,
+            self.local_dir,
             device_map=self.device,
             dtype=torch.float32 if self.device == 'cpu' else torch.float16
         )
+        speed = self.get_speed()
         
         for i,item in enumerate(self.queue_tts):
             if app_cfg.exit_soft: return
@@ -134,7 +134,8 @@ class OmniVoice(BaseTTS):
                 wav = model.generate(
                     text=item['text'],
                     ref_audio=reference_audio_file,
-                    ref_text=reference_text
+                    ref_text=reference_text,
+                    speed=speed
                 )
                 sf.write(output_filename, wav[0], 24000)
                 if not tools.vail_file(output_filename):

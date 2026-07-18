@@ -65,7 +65,16 @@
 
 * **Python**: 建议版本 3.10
 * **FFmpeg**: 必须安装并配置到环境变量。
-  * **macOS**: `brew install ffmpeg libsndfile git`
+  * **macOS**: 
+  ```
+    brew install libsndfile  git  python@3.10
+	
+	brew uninstall --ignore-dependencies ffmpeg
+	
+	brew tap homebrew-ffmpeg/ffmpeg
+	
+	brew install homebrew-ffmpeg/ffmpeg/ffmpeg
+  ```
   * **Linux (Ubuntu/Debian)**: `sudo apt-get install ffmpeg libsndfile1-dev`
   * **Windows**: [下载 FFmpeg](https://ffmpeg.org/download.html) 并配置 Path，或者直接将 ffmpeg.exe 和 ffprobe.exe 放在项目目录下
 
@@ -191,10 +200,13 @@ uv add nvidia-cublas-cu12 nvidia-cudnn-cu12
 
 * [FFmpeg](https://github.com/FFmpeg/FFmpeg)
 * [PySide6](https://pypi.org/project/PySide6/)
+* [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)
 * [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 * [openai-whisper](https://github.com/openai/whisper)
 * [edge-tts](https://github.com/rany2/edge-tts)
 * [F5-TTS](https://github.com/SWivid/F5-TTS)
+* [Confucius4-TTS](https://github.com/netease-youdao/Confucius4-TTS)
+* [OmniVoice](https://github.com/k2-fsa/omnivoice)
 * [CosyVoice](https://github.com/FunAudioLLM/CosyVoice)
 * [Gradio](https://www.gradio.app/) (WebUI)
 
