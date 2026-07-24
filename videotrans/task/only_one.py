@@ -30,6 +30,7 @@ class Worker(QThread):
 
     def run(self) -> None:
         # 从停止队列中移出，以便重新开始
+        #app_cfg.reset_queue()
         app_cfg.rm_uuid(self.file['uuid'])
         trk=None
         try:
@@ -37,10 +38,14 @@ class Worker(QThread):
             trk = TransCreate(cfg=TaskCfgVTT(**self.cfg | self.file))
             # 原始语言字幕文件
             app_cfg.onlyone_source_sub = trk.cfg.source_sub
+            app_cfg.onlyone_source_wav = trk.cfg.source_wav
+            app_cfg.onlyone_target_sub = trk.cfg.target_sub
+            app_cfg.onlyone_target_wav = trk.cfg.target_wav
+            app_cfg.onlyone_novoice_mp4 = trk.cfg.novoice_mp4
             # 如果存在原始字幕，并且字幕第一条开头存在说话人标识 \[(spk|speakers?)\s*?\d+\]
             # 则取出所有说话人，不存在的以第一条的为默认，然后从字幕中删除
             # 目标语言字幕文件
-            app_cfg.onlyone_target_sub = trk.cfg.target_sub
+            
             app_cfg.set_countdown(0)
             trk.prepare()                           
             if self._exit(): return
@@ -97,7 +102,12 @@ class Worker(QThread):
                     Path(f'{trk.cfg.cache_folder}/queue_tts.json').write_text(
                         json.dumps(trk.queue_tts, ensure_ascii=False), encoding='utf-8')
 
+                    app_cfg.onlyone_voice_autorate=trk.cfg.voice_autorate
+                    app_cfg.onlyone_video_autorate=trk.cfg.video_autorate
+                    app_cfg.remove_silent_mid=trk.cfg.remove_silent_mid
+                    app_cfg.align_sub_audio=trk.cfg.align_sub_audio
                     app_cfg.set_countdown(86400)
+                    
                     # 等待修改配音结果或重新配音
                     self._post(text=f"{trk.cfg.cache_folder}<|>{trk.cfg.target_language_code}", type='edit_dubbing')
                     self._post(text=tr('The subtitle editing interface is rendering'))
@@ -105,6 +115,10 @@ class Worker(QThread):
                         if self._exit(): return
                         time.sleep(1)
                         app_cfg.set_countdown(app_cfg.task_countdown - 1)
+                    trk.cfg.voice_autorate=app_cfg.onlyone_voice_autorate
+                    trk.cfg.video_autorate=app_cfg.onlyone_video_autorate
+                    trk.cfg.remove_silent_mid=app_cfg.onlyone_remove_silent_mid
+                    trk.cfg.align_sub_audio=app_cfg.onlyone_align_sub_audio
 
             if self._exit(): return
             trk.align()

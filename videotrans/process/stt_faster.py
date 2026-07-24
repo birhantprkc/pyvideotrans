@@ -157,7 +157,7 @@ def faster_whisper(
                 _write_log(logs_file, json.dumps({"type": "subtitle", "text": f'[{i}] {text}\n'}))
         else:
             logger.debug(f'直接传递完整音频，由faster-whisper内部VAD处理，返回字级时间戳数据')
-            _write_log(logs_file, json.dumps({"type": "logs", "text": 'Transcribe word_timestamps'}))
+            _write_log(logs_file, json.dumps({"type": "logs", "text": 'Transcribe word timestamps'}))
             segments, info = model.transcribe(
                 audio_file,
                 beam_size=beam_size,
@@ -190,7 +190,8 @@ def faster_whisper(
 
             logger.debug(f'faster-whisper模式下，对{model_name}模型返回的字级时间戳进行断句')
             if not texts:
-                return False, "No transcription results returned. Please check the original audio/video or model and try again."
+                logger.error(f'no texts:{info=}\n{segments=}')
+                return False, f"No transcription results returned. Please check the original audio/video or model and try again.\n{info=}"
             raws = _resegment(texts, info.language, max_speech_ms, logs_file)
             if jianfan and raws:
                 for it in raws:

@@ -99,7 +99,7 @@ def openai_whisper(
                 _write_log(logs_file, json.dumps({"type": "subtitle", "text": f'[{i}] {text}\n'}))
             logger.debug(f'openai-whisper模式下，预先使用VAD分割音频，直接使用{model_name}模型返回的各个片段音频的文字结果')
         else:
-            _write_log(logs_file, json.dumps({"type": "logs", "text": 'Transcribe word_timestamps'}))
+            _write_log(logs_file, json.dumps({"type": "logs", "text": 'Transcribe word timestamps'}))
             segments = model.transcribe(
                 audio_file,
                 no_speech_threshold=no_speech_threshold,
@@ -123,6 +123,7 @@ def openai_whisper(
                 _write_log(logs_file, json.dumps({"type": "subtitle", "text": f'[{i}] {segment["text"]}\n'}))
             logger.debug(f'openai-whisper模式下，传递完整音频由模型{model_name} 输出字级时间戳')
             if not texts:
+                logger.error(f'no texts:{segments=}')
                 return False, "No transcription results returned. Please check the original audio/video or model and try again."
             logger.debug(f'对字级时间戳进行组合断句')
             raws = _resegment(texts, segments['language'], max_speech_ms, logs_file)
