@@ -6,7 +6,7 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QLabel, QProgressBar, QHBoxLayout
 
 from videotrans.configure.config import tr
-from videotrans.util import tools
+from videotrans.util.help_misc import show_error
 
 
 class ClickableProgressBar(QLabel):
@@ -43,7 +43,7 @@ class ClickableProgressBar(QLabel):
         """)
         layout = QHBoxLayout(self)
         layout.addWidget(self.progress_bar)  # 将进度条添加到布局
-
+    # 保存输出目录，以便点击进度条时打开
     def setTarget(self, target_dir=None, name=None):
         self.target_dir = target_dir
         self.name = name
@@ -80,11 +80,13 @@ class ClickableProgressBar(QLabel):
 
     # 出错时，设置状态，停止 完成
     def setError(self, text=""):
-        self.error = text.strip()
         self.ended = True
         self.progress_bar.setToolTip(
             tr("Click to view the detailed error report"))
-        self.progress_bar.setFormat(f'  [{self.precent}%]  {text[:90].strip()}   {self.basename}')
+        if text:
+            self.error = text.strip()
+        show_msg=self.error.strip().split('\n')[0]+f'[{tr("Click to view the detailed error report")}] {self.basename} '
+        self.progress_bar.setFormat(show_msg[0:210])
 
     # 设置按钮显示文字，如果已结束，则不设置，直接返回
     # 进度 set_precent 后将仅传进来时间，此时使用上次保留的msg消息
@@ -105,5 +107,5 @@ class ClickableProgressBar(QLabel):
     def mousePressEvent(self, event):
         if self.target_dir and event.button() == Qt.LeftButton:
             if self.error:
-                tools.show_error(self.error)
+                show_error(self.error)
             QDesktopServices.openUrl(QUrl.fromLocalFile(self.target_dir))

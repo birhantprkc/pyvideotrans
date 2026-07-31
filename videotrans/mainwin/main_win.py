@@ -5,7 +5,7 @@ import os
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow
 from videotrans.configure import config
@@ -19,15 +19,16 @@ from videotrans.task.simple_runnable_qt import run_in_threadpool
 from videotrans.mainwin._bind_signals import BindSignalsMixin
 from videotrans.mainwin._winform import WinformMixin
 from videotrans.mainwin._lifecycle import LifecycleMixin
-
+from videotrans.task.job import start_thread
 
 class MainWindow(BindSignalsMixin, WinformMixin, LifecycleMixin, QMainWindow, Ui_MainWindow):
 
 
-    def __init__(self, parent=None, width=1200, height=650,callback=None):
+    def __init__(self, parent=None, width=1400, height=700,callback=None,screen_size=None):
         super().__init__(parent)
         self.callback=callback
         self.resize(width, height)
+        self.screen_size=screen_size
         self.setupUi(self)
         self.callback("SetupUI end...")
 
@@ -158,7 +159,7 @@ class MainWindow(BindSignalsMixin, WinformMixin, LifecycleMixin, QMainWindow, Ui
         _rolelist = role_menu(_tts_type, _langcode)
         self.voice_role.addItems(_rolelist)
         self.current_rolelist = _rolelist
-        logger.debug(f'上次缓存的角色:{_role},字幕嵌入类型:{_subtitle_type},发音语言:{_source_language},目标语言:{_target_language}，目标语言代码:{_langcode},模型:{_model_name},TTS渠道[{_tts_type}]')
+        logger.debug(f'Version: {VERSION}, Frozen：{config.IS_FROZEN}, OS: {sys.platform}\n上次缓存的角色:{_role},字幕嵌入类型:{_subtitle_type},发音语言:{_source_language},目标语言:{_target_language}，目标语言代码:{_langcode},模型:{_model_name},TTS渠道[{_tts_type}]')
         if _langcode:
             self.target_language.setCurrentText(_target_language)
             if _role in _rolelist:
@@ -166,19 +167,18 @@ class MainWindow(BindSignalsMixin, WinformMixin, LifecycleMixin, QMainWindow, Ui
         self.callback('show main window ...')
         self.show()
         run_in_threadpool(self._daemon)
-        self._bind_signal()
+        QTimer.singleShot(10,self._bind_signal)
+
 
     def _daemon(self):
         from videotrans.util.help_ffmpeg import check_hw_on_start
         from videotrans.util.help_misc import check_new_version, is_connect_hf
-        check_hw_on_start()
+        check_hw_on_start(force=True)
         check_new_version()
         is_connect_hf()
 
     def _start_workers(self, status):
         if status == 'end':
-            from videotrans.task.job import start_thread
-            from videotrans.configure.config import tr
             self.worker_threads = start_thread()
             self.startbtn.setDisabled(False)
             self.startbtn.setText(tr("Start"))

@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from videotrans.configure.config import ROOT_DIR, tr, settings, logger
-from videotrans.util import tools
+from videotrans.util._srt_parse import get_subtitle_from_srt, ms_to_time_string
 
 
 class EditRecognResultDialog2(QDialog):
@@ -31,8 +31,8 @@ class EditRecognResultDialog2(QDialog):
 
         self.setWindowTitle(tr("zimubianjitishi"))
         self.setWindowIcon(QIcon(f"{ROOT_DIR}/videotrans/styles/icon.ico"))
-        self.setMinimumWidth(1200)
-        self.setMinimumHeight(700)
+        self.setMinimumWidth(parent.screen_size[0]*0.95)
+        self.setMinimumHeight(parent.screen_size[1]*0.9)
         self.setWindowFlags(
             Qt.Window |
             Qt.WindowStaysOnTopHint |
@@ -53,7 +53,7 @@ class EditRecognResultDialog2(QDialog):
         self.prompt_label.setStyleSheet('font-size:14px;color:#aaaaaa')
         hstop.addWidget(self.prompt_label)
         self.stop_button = QPushButton(f"{tr('Click here to stop the countdown')}({self.count_down})")
-        self.stop_button.setStyleSheet("font-size: 16px;color:#ffff00")
+        self.stop_button.setStyleSheet("font-size: 14px;color:#ffff00")
         self.stop_button.setCursor(Qt.PointingHandCursor)
         self.stop_button.clicked.connect(self.stop_countdown)
         hstop.addWidget(self.stop_button)
@@ -259,7 +259,7 @@ class EditRecognResultDialog2(QDialog):
         self.video_player.play()
         self.audio_player.play()
         self._stack.setCurrentIndex(0)
-        self.video_status.setText(f"\u23F5 {tools.ms_to_time_string(ms=start_ms)} \u2192 {tools.ms_to_time_string(ms=end_ms)}")
+        self.video_status.setText(f"\u23F5 {ms_to_time_string(ms=start_ms)} \u2192 {ms_to_time_string(ms=end_ms)}")
         #self.stop_countdown()
         # Start polling timer for reliable video position tracking
         if hasattr(self, '_poll_timer'):
@@ -309,23 +309,23 @@ class EditRecognResultDialog2(QDialog):
     # ===================== Table =====================
     def load_table(self):
         try:
-            self.srt_list_dict = tools.get_subtitle_from_srt(self.source_sub)
+            self.srt_list_dict = get_subtitle_from_srt(self.source_sub)
             self.table.setColumnCount(4)
             self.table.setHorizontalHeaderLabels([
-                tr("Line"), tr('Subtitles') + tr("Time Axis"), "\u23F5", tr("Subtitle Text")
+                tr("Line"), tr('Subtitles') + tr("Time Axis"), tr("Play"), tr("Subtitle Text")
             ])
 
             self.table.setShowGrid(False)
             self.table.setAlternatingRowColors(False)
-            self.table.setWordWrap(False)
+            self.table.setWordWrap(True)
             self.table.setMouseTracking(False)
             self.table.setFocusPolicy(Qt.NoFocus)
             self.table.setSelectionMode(QAbstractItemView.NoSelection)
 
             v_header = self.table.verticalHeader()
             v_header.setVisible(False)
-            v_header.setSectionResizeMode(QHeaderView.Fixed)
-            v_header.setDefaultSectionSize(26)
+            v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+            v_header.setMinimumSectionSize(26)
 
             h_header = self.table.horizontalHeader()
             h_header.setStretchLastSection(True)
@@ -355,20 +355,14 @@ class EditRecognResultDialog2(QDialog):
                     height: 24px;
                 }
                 QPushButton#playBtn {
-                    background-color: #3a7c3a;
+                    background-color: transparent;
                     color: white;
                     border: none;
                     border-radius: 2px;
-                    font-size: 9px;
+                    font-size: 14px;
                     padding: 1px 4px;
                     min-width: 20px;
                     max-width: 24px;
-                }
-                QPushButton#playBtn:hover {
-                    background-color: #4caf50;
-                }
-                QPushButton#playBtn:pressed {
-                    background-color: #2e5e2e;
                 }
             """)
 
@@ -427,9 +421,9 @@ class EditRecognResultDialog2(QDialog):
             btn.clicked.connect(lambda checked=False, _s=s, _e=e: self._play_segment(_s, _e))
             self.table.setCellWidget(row, 2, btn)
 
-            item3 = QTableWidgetItem(data['text'])
-            item3.setFlags(Qt.ItemIsEnabled | Qt.ItemIsEditable | Qt.ItemIsSelectable)
-            self.table.setItem(row, 3, item3)
+            text_item = QTableWidgetItem(data['text'])
+            text_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsEditable | Qt.ItemIsSelectable)
+            self.table.setItem(row, 3, text_item)
 
     def _load_remaining(self, start_row):
         total = len(self.display_data)
@@ -486,6 +480,7 @@ class EditRecognResultDialog2(QDialog):
         self.table.setUpdatesEnabled(True)
 
     def save_and_close2(self):
+        self.stop_countdown()
         self._release_media()
         self.accept()
 
@@ -496,6 +491,7 @@ class EditRecognResultDialog2(QDialog):
         QDesktopServices.openUrl(QUrl.fromLocalFile(Path(self.source_sub).parent.as_posix()))
 
     def save_and_close(self):
+        self.stop_countdown()
         self.save_button.setDisabled(True)
         srt_str_list = []
         for i, data in enumerate(self.display_data):

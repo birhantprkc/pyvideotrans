@@ -1,6 +1,5 @@
 def openwin():
     from videotrans.configure.config import tr,params,app_cfg
-    from videotrans.util import tools
     from videotrans.util.TestSrtTrans import TestSrtTrans
     from videotrans.winform._helpers import make_feed_translator
     from videotrans.component.set_form import DeepLXForm
@@ -30,7 +29,7 @@ def openwin():
         params.save()
         winobj.close()
 
-    winobj.deeplx_address.setText(params.get("deeplx_address", ''))
+    winobj.deeplx_address.setText(str(params.get("deeplx_address", '')))
     winobj.deeplx_key.setText(str(params.get("deeplx_key", '')))
     winobj.set_deeplx.clicked.connect(save)
     winobj.test.clicked.connect(test)

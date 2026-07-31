@@ -4,10 +4,11 @@ import shutil
 import time
 from pathlib import Path
 
+from videotrans.configure._paths import DUBBING_CACHE
 from videotrans.configure.config import tr, app_cfg, settings, logger
 from videotrans.configure.excepts import DubbingSrtError
 from videotrans.tts import run as run_tts, SUPPORT_CLONE
-from videotrans.util.help_misc import get_md5
+from videotrans.util.help_misc import get_md5, vail_file
 from videotrans.util.help_srt import get_subtitle_from_srt, delete_punc
 
 
@@ -21,21 +22,14 @@ class DubbingMixin:
             self.signal(text=tr('kaishipeiyin'))
         self.precent += 3
         self._tts()
-        if Path(self.cfg.target_sub).exists():
-            subs = get_subtitle_from_srt(self.cfg.target_sub)
-            if self.cfg.fix_punc==2:
-                logger.debug('配音结束后，移除目标字幕中所有标点')
-            for it in subs:
-                it['text']=it['text'].strip('...')
-                if self.cfg.fix_punc==2:
-                    it['text']=delete_punc(it['text'])
-            self._save_srt_target(subs, self.cfg.target_sub)
-
-        if  self.cfg.fix_punc==2 and Path(self.cfg.source_sub).exists():
+        
+        if  Path(self.cfg.source_sub).exists():
             logger.debug('配音结束后，移除原始字幕中所有标点')
             subs = get_subtitle_from_srt(self.cfg.source_sub)
             for it in subs:
-                it['text']=delete_punc(it['text'])
+                if self.cfg.fix_punc==2:
+                    it['text']=delete_punc(it['text'])
+                it['text']=it['text'].strip('...')
             self._save_srt_target(subs, self.cfg.source_sub)
         if self.should_dubbing:
             self.signal(text=tr('The dubbing is finished'))
@@ -84,8 +78,12 @@ class DubbingMixin:
                 "volume": self.cfg.volume,
                 "pitch": self.cfg.pitch,
                 "tts_type": self.cfg.tts_type,
-                "filename": f"{self.cfg.cache_folder}/dubb-{i}-{_key}.wav"
+                "filename": f"{self.cfg.cache_folder}/{i}-{_key}.wav"
             }
+            _dubbing_cache=f'{DUBBING_CACHE}/{_key}.wav'
+            if vail_file(_dubbing_cache):
+                # 直接使用缓存
+                shutil.copy2(_dubbing_cache,tmp_dict['filename'])
             if str(voice).strip().lower() == 'clone' and self.cfg.tts_type in SUPPORT_CLONE:
                 tmp_dict['ref_wav'] = f"{self.cfg.cache_folder}/clone-{i}.wav"
                 tmp_dict['ref_language'] = self.cfg.detect_language[:2]
@@ -106,11 +104,19 @@ class DubbingMixin:
             tts_type=self.cfg.tts_type,
             is_cuda=self.cfg.is_cuda
         )
+        outname=None
         if settings.get('save_segment_audio', False):
             outname = self.cfg.target_dir + f'/segment_audio_{self.cfg.noextname}'
             Path(outname).mkdir(parents=True, exist_ok=True)
-            for it in self.queue_tts:
-                text = re.sub(r'["\'*?\\/|:<>\r\n\t]+', '', it['text'], flags=re.I | re.S)
-                name = f'{outname}/{it["line"]}-{text[:60]}.wav'
-                if Path(it['filename']).exists():
+        for it in self.queue_tts:
+            it['text']=it['text'].strip('...')
+            if self.cfg.fix_punc==2:
+                it['text']=delete_punc(it['text'])
+            if Path(it['filename']).exists():
+                # 保存缓存
+                shutil.copy2(it['filename'],f'{DUBBING_CACHE}/'+Path(it['filename']).name.split('-')[-1])
+                if outname:
+                    text = re.sub(r'["\'*?\\/|:<>\r\n\t]+', '', it['text'], flags=re.I | re.S)
+                    name = f'{outname}/{it["line"]}-{text[:60]}.wav'
                     shutil.copy2(it['filename'], name)
+        

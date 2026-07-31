@@ -1,6 +1,5 @@
 def openwin():
     from videotrans.configure.config import tr,params,app_cfg
-    from videotrans.util import tools
     from videotrans import recognition
     from videotrans.util.TestSTT import TestSTT
     from videotrans.winform._helpers import make_feed_stt
@@ -29,8 +28,8 @@ def openwin():
         params.save()
         winobj.close()
 
-    winobj.stt_url.setText(params.get("stt_url", ''))
-    winobj.stt_model.setCurrentText(params.get("stt_model", ''))
+    winobj.stt_url.setText(str(params.get("stt_url", '')))
+    winobj.stt_model.setCurrentText(str(params.get("stt_model", '')))
     winobj.set.clicked.connect(save)
     winobj.test.clicked.connect(test)
     winobj.show()

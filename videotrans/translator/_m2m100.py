@@ -5,13 +5,15 @@ import sentencepiece as spm
 from dataclasses import dataclass
 from typing import List, Union
 from videotrans.configure.config import ROOT_DIR,logger
+from videotrans.configure.contants import M2M100_URL_MS, M2M100_URL_HF
 from videotrans.translator._base import BaseTrans
 import torch
 
 # Adapted from:
 # https://gist.github.com/ymoslem/a414a0ead0d3e50f4d7ff7110b1d1c0d
 # https://github.com/ymoslem/DesktopTranslator
-from videotrans.util import tools
+from videotrans.util.help_down import down_zip
+from videotrans.util.help_misc import is_connect_hf
 
 _LANGUAGE_CODE_MAP = {
         "en": "__en__",
@@ -65,7 +67,7 @@ class M2M100Trans(BaseTrans):
 
     def _download(self):
         if not Path(f'{ROOT_DIR}/models/m2m100_12b/model.bin').exists():
-            tools.down_zip(f"{ROOT_DIR}/models", 'https://modelscope.cn/models/himyworld/videotrans/resolve/master/m2m100_12b_model.zip',self._process_callback)
+            down_zip(f"{ROOT_DIR}/models", M2M100_URL_MS if not is_connect_hf() else M2M100_URL_HF,self._process_callback)
         self.model = ctranslate2.Translator(
             model_path=f'{ROOT_DIR}/models/m2m100_12b',
             device="cpu" if not torch.cuda.is_available() else "cuda",

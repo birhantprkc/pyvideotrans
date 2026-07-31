@@ -4,6 +4,7 @@ import os, re
 import platform
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import is_dataclass, asdict
 from functools import lru_cache
@@ -239,8 +240,7 @@ def show_glossary_editor(parent):
     try:
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8-sig", errors="ignore") as f:
-                content = f.read()
-                text_edit.setText(content)
+                text_edit.setText(f.read())
     except Exception as e:
         logger.exception(f"读取术语表文件失败: {e}", exc_info=True)
 
@@ -382,7 +382,6 @@ def set_proxy(set_val=''):
 
     # 获取代理
     http_proxy = app_cfg.proxy or os.environ.get('HTTP_PROXY') or os.environ.get('HTTPS_PROXY')
-
     if http_proxy:
         http_proxy = http_proxy.lower()
         if not http_proxy.startswith("http") and not http_proxy.startswith('sock'):
@@ -482,6 +481,9 @@ def get_tts_type(type_index=None):
 
 
 def is_connect_hf()->bool:
+    # 强制使用 huggingface.co
+    if Path(f'{ROOT_DIR}/huggingface.txt').exists():
+        return True
     try:
         import requests
         logger.debug(f'{app_cfg.proxy=}')
@@ -497,11 +499,22 @@ def is_connect_hf()->bool:
         os.environ['HF_ENDPOINT'] = 'https://huggingface.co'
         logger.debug('可以使用 huggingface.co')
         return True
-    return False
-
 
 def show_refaudio_win():
     from videotrans.component.set_form import RefaudioForm
     dialog = RefaudioForm()
     dialog.exec()
     return
+
+
+def atomic_write_json(data, target_path):
+    target = Path(target_path)
+
+    # 创建临时文件
+    fd, tmp_name = tempfile.mkstemp(dir=target.parent, suffix='.tmp', text=True)
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+
+    # 原子替换（此处即使进程崩溃，原文件依然完整）
+    os.replace(tmp_name, target_path)
+

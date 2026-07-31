@@ -16,8 +16,8 @@ from PySide6.QtWidgets import (
 
 from videotrans.configure.config import ROOT_DIR, tr, app_cfg, settings, logger
 from videotrans.configure import config
-from videotrans.util import tools
-
+from videotrans.util._srt_parse import ms_to_time_string, get_subtitle_from_srt
+from videotrans.util.help_misc import show_error
 
 
 class SpeakerAssignmentDialog(QDialog):
@@ -50,7 +50,7 @@ class SpeakerAssignmentDialog(QDialog):
             if sour_pt.as_posix() and not sour_pt.samefile(Path(target_sub)):
                 try:
                     self.source_srtstring = sour_pt.read_text(encoding="utf-8-sig")
-                    self.source_srt_list_dict = tools.get_subtitle_from_srt(source_sub)
+                    self.source_srt_list_dict = get_subtitle_from_srt(source_sub)
                 except Exception:
                     self.source_srtstring = ""
 
@@ -73,8 +73,8 @@ class SpeakerAssignmentDialog(QDialog):
 
         self.setWindowTitle(tr("zidonghebingmiaohou"))
         self.setWindowIcon(QIcon(f"{ROOT_DIR}/videotrans/styles/icon.ico"))
-        self.setMinimumWidth(1200)
-        self.setMinimumHeight(700)
+        self.setMinimumWidth(parent.screen_size[0]*0.95)
+        self.setMinimumHeight(parent.screen_size[1]*0.9)
         self.setWindowFlags(
         Qt.WindowStaysOnTopHint |       # 2. 始终在最顶层
             Qt.WindowTitleHint |            # 3. 显示标题栏
@@ -95,7 +95,7 @@ class SpeakerAssignmentDialog(QDialog):
         hstop.addWidget(self.prompt_label)
 
         self.stop_button = QPushButton(f"{tr('Click here to stop the countdown')}({self.count_down})")
-        self.stop_button.setStyleSheet("font-size: 16px;color:#ffff00")
+        self.stop_button.setStyleSheet("font-size: 14px;color:#ffff00")
         self.stop_button.setCursor(Qt.PointingHandCursor)
         self.stop_button.setMinimumSize(QSize(300, 35))
         self.stop_button.clicked.connect(self.stop_countdown)
@@ -232,13 +232,13 @@ class SpeakerAssignmentDialog(QDialog):
 
 
         try:
-            self.srt_list_dict= tools.get_subtitle_from_srt(self.target_sub)
+            self.srt_list_dict= get_subtitle_from_srt(self.target_sub)
             # 1. 创建 QTableWidget（比 Model/View 快得多）
             self.table = QTableWidget()
             
             # 2. 【极致性能配置】禁用所有非必要功能
             self.table.setColumnCount(8)
-            self.table.setHorizontalHeaderLabels(["Sel", tr("Line"), tr('Speaker'), tr("Dubbing role"), tr("Time Axis"), "\u23F5", tr("Subtitle Text"),tr("SourceLang Text")])
+            self.table.setHorizontalHeaderLabels(["Sel", tr("Line"), tr('Speaker'), tr("Dubbing role"), tr("Time Axis"), tr("Play"), tr("Subtitle Text"),tr("SourceLang Text")])
             
             # 禁用所有视觉效果
             self.table.setAlternatingRowColors(False)
@@ -251,8 +251,10 @@ class SpeakerAssignmentDialog(QDialog):
             # 禁用焦点
             self.table.setFocusPolicy(Qt.NoFocus)
             
-            # 固定行高，避免动态计算
-            self.table.verticalHeader().setDefaultSectionSize(22)
+            # 长文本自动换行时行高自适应
+            self.table.setWordWrap(True)
+            self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.verticalHeader().setMinimumSectionSize(22)
             self.table.verticalHeader().setVisible(False)
             
             # 列宽设置
@@ -264,15 +266,15 @@ class SpeakerAssignmentDialog(QDialog):
             header.setSectionResizeMode(4, QHeaderView.Fixed)  # Time
             header.setSectionResizeMode(5, QHeaderView.Fixed)  # Play
             header.setSectionResizeMode(6, QHeaderView.Stretch)  # Text
-            header.setSectionResizeMode(7, QHeaderView.Fixed)  # SourceText
+            header.setSectionResizeMode(7, QHeaderView.Stretch)  # SourceText
             
             self.table.setColumnWidth(0, 30)
             self.table.setColumnWidth(1, 40)
             self.table.setColumnWidth(2, 50)
             self.table.setColumnWidth(3, 150)
-            self.table.setColumnWidth(4, 180)
+            self.table.setColumnWidth(4, 200)
             self.table.setColumnWidth(5, 30)
-            self.table.setColumnWidth(7, 300)
+            #self.table.setColumnWidth(7, 300)
             
             # 最小样式
             self.table.setStyleSheet("""
@@ -291,20 +293,14 @@ class SpeakerAssignmentDialog(QDialog):
                     padding: 2px;
                 }
                 QPushButton#playBtn {
-                    background-color: #3a7c3a;
+                    background-color: transparent;
                     color: white;
                     border: none;
                     border-radius: 2px;
-                    font-size: 9px;
+                    font-size: 14px;
                     padding: 1px 4px;
                     min-width: 20px;
                     max-width: 24px;
-                }
-                QPushButton#playBtn:hover {
-                    background-color: #4caf50;
-                }
-                QPushButton#playBtn:pressed {
-                    background-color: #2e5e2e;
                 }
             """)
             
@@ -590,7 +586,7 @@ class SpeakerAssignmentDialog(QDialog):
             self.listen_button.setText(tr("Trial dubbing"))
             self.listen_button.setDisabled(False)
             if d != "ok":
-                tools.show_error(d)
+                show_error(d)
 
         wk = ListenVoice(parent=self, queue_tts=[{
             "text": first_text,
@@ -681,7 +677,7 @@ class SpeakerAssignmentDialog(QDialog):
         self.video_player.play()
         self.audio_player.play()
         self._stack.setCurrentIndex(0)
-        self.video_status.setText(f"\u23F5 {tools.ms_to_time_string(ms=start_ms)} → {tools.ms_to_time_string(ms=end_ms)}")
+        self.video_status.setText(f"\u23F5 {ms_to_time_string(ms=start_ms)} → {ms_to_time_string(ms=end_ms)}")
         #self.stop_countdown()
 
     def _stop_playback(self):
@@ -752,6 +748,7 @@ class SpeakerAssignmentDialog(QDialog):
             self.timer=None
 
     def save_and_close2(self):
+        self.stop_countdown()
         self._release_media()
         self.accept()
 
@@ -763,6 +760,7 @@ class SpeakerAssignmentDialog(QDialog):
         event.ignore()  # 忽略关闭请求，窗口保持不动
     
     def save_and_close(self):
+        self.stop_countdown()
         self._release_media()
         self.save_button.setDisabled(True)
         app_cfg.line_roles = {}

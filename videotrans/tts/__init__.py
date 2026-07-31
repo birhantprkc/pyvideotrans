@@ -69,6 +69,19 @@ SUPPORT_CLONE = [
     CONFUCIUS_TTS,
     ZIPVOICE_TTS
 ]
+# 本地内置，在单视频模式下 校对配音时，需 is_redubb 特殊处理
+LOCAL_BUILTIN=[
+QWEN3LOCAL_TTS,
+F5_TTS,
+OMNIVOICE_TTS,
+CONFUCIUS_TTS,
+MOSS_TTS,
+ZIPVOICE_TTS,
+PIPER_TTS,
+CHATTERBOX_TTS,
+Supertonic_TTS,
+VITSCNEN_TTS
+]
 
 
 # 配音角色根据语言不同而变化的渠道
@@ -77,16 +90,16 @@ CHANGE_BY_LANGUAGE = [EDGE_TTS, MINIMAXI_TTS, AZURE_TTS, DOUBAO2_TTS, AI302_TTS,
 
 _ID_NAME_DICT = {
     EDGE_TTS: ChannelProvider(tr("Edge-TTS(free)"), "._edgetts"),
-    QWEN3LOCAL_TTS: ChannelProvider(f"Qwen3-TTS({tr('Local')}{tr('Built-in')})", "._qwenttslocal"),
-    F5_TTS: ChannelProvider(f"F5-TTS({tr('Local')}{tr('Built-in')})", "._f5tts"),
-    OMNIVOICE_TTS: ChannelProvider(f"OmniVoice({tr('Local')}{tr('Built-in')})", "._omnivoice"),
-    CONFUCIUS_TTS: ChannelProvider(f"Confucius-TTS({tr('Local')}{tr('Built-in')})", "._confuciustts"),
-    MOSS_TTS: ChannelProvider(f"MOSS-TTS-Nano({tr('Local')}{tr('Built-in')})", "._mosstts"),
-    ZIPVOICE_TTS: ChannelProvider(f"{tr('ZipVoice')}({tr('Local')}{tr('Built-in')})", "._zipvoice"),
-    PIPER_TTS: ChannelProvider(f"Piper({tr('Local')}{tr('Built-in')})", "._piper"),
-    CHATTERBOX_TTS: ChannelProvider(f"ChatterBox({tr('Local')}{tr('Built-in')})", "._chatterbox",  win="chatterbox"),
-    Supertonic_TTS: ChannelProvider(f"Supertonic3({tr('Local')}{tr('Built-in')})", "._supertonic"),
-    VITSCNEN_TTS: ChannelProvider(f"{tr('VITS')}({tr('Local')}{tr('Built-in')})", "._vits"),
+    QWEN3LOCAL_TTS: ChannelProvider(f"Qwen3-TTS({tr('Built-in')})", "._qwenttslocal"),
+    F5_TTS: ChannelProvider(f"F5-TTS({tr('Built-in')})", "._f5tts"),
+    OMNIVOICE_TTS: ChannelProvider(f"OmniVoice({tr('Built-in')})", "._omnivoice"),
+    CONFUCIUS_TTS: ChannelProvider(f"Confucius-TTS({tr('Built-in')})", "._confuciustts"),
+    MOSS_TTS: ChannelProvider(f"MOSS-TTS-Nano({tr('Built-in')})", "._mosstts"),
+    ZIPVOICE_TTS: ChannelProvider(f"{tr('ZipVoice')}({tr('Built-in')})", "._zipvoice"),
+    PIPER_TTS: ChannelProvider(f"Piper({tr('Built-in')})", "._piper"),
+    CHATTERBOX_TTS: ChannelProvider(f"ChatterBox({tr('Built-in')})", "._chatterbox",  win="chatterbox"),
+    Supertonic_TTS: ChannelProvider(f"Supertonic3({tr('Built-in')})", "._supertonic"),
+    VITSCNEN_TTS: ChannelProvider(f"{tr('VITS')}({tr('Built-in')})", "._vits"),
 
     
     INDEX_TTS: ChannelProvider(f"Index-TTS({tr('Local')}API)", "._index", key_name="indextts_url", win="gradiowin"),
@@ -185,7 +198,7 @@ def clone_tips(tts_type, role: str = 'No', recogn_type=9):
 
 
 # 统一调用 tts渠道入口，通过 tts_type 调用对应渠道
-def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, tts_type=0, is_cuda=False) -> None:
+def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, tts_type=0, is_cuda=False,is_redubb=False) -> None:
     # 需要并行的数量3
     if len(queue_tts) < 1 or app_cfg.exit_soft or (uuid and uuid in app_cfg.stoped_uuid_set): return
 
@@ -196,7 +209,8 @@ def run(*, queue_tts=None, language=None, uuid=None, play=False, is_test=False, 
         "play": play,
         "is_test": is_test,
         "tts_type": tts_type,
-        "is_cuda": is_cuda
+        "is_cuda": is_cuda,
+        "is_redubb":is_redubb
     }
 
     _cls: Union[Type[BaseTTS], None] = get_class(tts_type, "tts", _ID_NAME_DICT)

@@ -175,7 +175,7 @@ class Ui_fanyisrt(object):
         self.fanyi_stop.setObjectName("fanyi_stop")
         self.fanyi_stop.setDisabled(True)
         self.fanyi_stop.setCursor(Qt.PointingHandCursor)
-        self.fanyi_stop.setText(tr("Stop"))
+        self.fanyi_stop.setText(tr("stop"))
 
         v1 = QtWidgets.QVBoxLayout()
         v1.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
@@ -196,7 +196,7 @@ class Ui_fanyisrt(object):
 
         # end
 
-        fanyisrt.setWindowTitle(tr("Text  Or Srt  Translation"))
+        fanyisrt.setWindowTitle(tr("transsrt-windows-title"))
         self.retranslateUi()
 
         QMetaObject.connectSlotsByName(fanyisrt)

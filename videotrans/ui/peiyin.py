@@ -16,7 +16,7 @@ class Ui_peiyin(object):
         self.error_msg = ""
         if not peiyin.objectName():
             peiyin.setObjectName("peiyin")
-        peiyin.setMinimumSize(900, 500)
+        peiyin.setMinimumSize(1200, 500)
 
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -147,7 +147,7 @@ class Ui_peiyin(object):
         self.pitch_rate.setMinimumWidth(90)
         self.pitch_rate.setObjectName("pitch_rate")
 
-        self.out_format_label = QtWidgets.QLabel(text=tr("Out format"))
+        self.out_format_label = QtWidgets.QLabel(text=tr("Output"))
 
         self.out_format = QtWidgets.QComboBox()
         self.out_format.addItems([
@@ -175,7 +175,7 @@ class Ui_peiyin(object):
 
         self.hecheng_stop = QtWidgets.QPushButton()
         self.hecheng_stop.setFixedWidth(100)
-        self.hecheng_stop.setText(tr("Stop"))
+        self.hecheng_stop.setText(tr("stop"))
         self.hecheng_stop.setDisabled(True)
         self.hecheng_stop.setObjectName("hecheng_stop")
         self.hecheng_stop.setCursor(Qt.PointingHandCursor)
@@ -204,7 +204,7 @@ class Ui_peiyin(object):
         self.verticalLayout_4.addWidget(self.hecheng_opendir)
         self.horizontalLayout_11.addLayout(self.verticalLayout_4)
 
-        peiyin.setWindowTitle(tr("Batch dubbing of SRT or TXT subtitle files"))
+        peiyin.setWindowTitle(tr("tts-windows-title"))
         self.retranslateUi()
 
         # tab-4 语音合成

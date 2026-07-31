@@ -19,7 +19,7 @@ class Ui_peiyinrole(object):
         self.error_msg = ""
         if not peiyinrole.objectName():
             peiyinrole.setObjectName(u"peiyinrole")
-        peiyinrole.setMinimumSize(1000, 750)
+        peiyinrole.setMinimumSize(1200, 750)
 
         self.main_layout = QtWidgets.QVBoxLayout(peiyinrole)
         self.main_layout.setObjectName("main_layout")
@@ -266,7 +266,7 @@ class Ui_peiyinrole(object):
         self.hecheng_startbtn = QtWidgets.QPushButton()
         self.hecheng_startbtn.setMinimumSize(QtCore.QSize(200, 40))
         self.hecheng_startbtn.setCursor(Qt.PointingHandCursor)
-        self.hecheng_stop = QtWidgets.QPushButton(tr("Stop"))
+        self.hecheng_stop = QtWidgets.QPushButton(tr("stop"))
         self.hecheng_stop.setFixedWidth(100)
         self.hecheng_stop.setDisabled(True)
         self.hecheng_stop.setCursor(Qt.PointingHandCursor)
@@ -290,7 +290,7 @@ class Ui_peiyinrole(object):
 
     def retranslateUi(self, peiyinrole):
         peiyinrole.setWindowTitle(
-            tr("Subtitle multi-role dubbing: assign a voice to each subtitle"))
+            tr("multi-windows-title"))
         self.label_10.setText(tr("Subtitle lang"))
         self.label_8.setText(tr("TTS"))
         self.label_11.setText(tr("Default Role"))

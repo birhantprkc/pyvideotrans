@@ -11,9 +11,10 @@ from edge_tts.exceptions import NoAudioReceived
 from videotrans.configure.config import tr, settings, app_cfg, logger, ROOT_DIR
 from videotrans.configure.excepts import DubbingSrtError
 from videotrans.tts._base import BaseTTS
-from videotrans.util import tools
 
 # edge-tts 限流，可能产生大量超时、401等错误
+from videotrans.util.help_misc import vail_file
+from videotrans.util.help_role import get_edge_rolelist
 
 MAX_CONCURRENT_TASKS = int(settings.get('edgetts_max_concurrent_tasks',10))
 RETRY_NUMS = int(settings.get('edgetts_retry_nums',3))+1
@@ -27,9 +28,10 @@ SAVE_TIMEOUT = 30  # edge_tts可能限流超时，超过30s就认定失败，防
 class EdgeTTS(BaseTTS):
     def __post_init__(self):
         super().__post_init__()
-        self._stop_event = asyncio.Event()
+        self._stop_event = None#asyncio.Event()
         self.ends_counter = 0
-        self.lock = asyncio.Lock()
+        self.lock = None#asyncio.Lock()
+
         # 默认跟随设置使用代理，如果不想使用，单独根目录下创建 edgetts-noproxy.txt 文件
         self.useproxy=None if not self.proxy_str or Path(f'{ROOT_DIR}/edgetts-noproxy.txt').exists() else self.proxy_str
 
@@ -41,7 +43,7 @@ class EdgeTTS(BaseTTS):
     async def _create_audio_with_retry(self, item, index, total_tasks, semaphore):
         # 根据角色名获取真实 配音所需的角色
         task_id = f" [{index + 1}/{total_tasks}]"
-        if self._exit() or not item.get('text','').strip() or tools.vail_file(item['filename']):
+        if self._exit() or not item.get('text','').strip() or vail_file(item['filename']):
             await self.increment_counter()
             return
         
@@ -52,7 +54,7 @@ class EdgeTTS(BaseTTS):
                     return
                 msg=""
                 for attempt in range(RETRY_NUMS+1):
-                    if self._stop_event.is_set():
+                    if self._exit() or self._stop_event.is_set():
                         return
                     
                     try:
@@ -131,15 +133,35 @@ class EdgeTTS(BaseTTS):
             self._stop_event.set()
     
     async def _exec(self) -> None:
-        logger.debug(f'本次EdgeTTS配音：重试延迟:{RETRY_DELAY},出错将重试:{RETRY_NUMS},并发:{MAX_CONCURRENT_TASKS}, 代理:{self.useproxy}')
-        self._stop_event.clear()
+        self._stop_event = asyncio.Event()
+        self.lock = asyncio.Lock()
+        self.ends_counter = 0
         total_tasks = len(self.queue_tts)
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
+        if total_tasks==1:
+            communicate = Communicate(
+                self.queue_tts[0]['text'],
+                voice=get_edge_rolelist(self.queue_tts[0]['role'],self.language),
+                rate=self.rate,
+                volume=self.volume,
+                proxy=self.useproxy,
+                pitch=self.pitch,
+                connect_timeout=5
+            )
+            mp3_path=self.queue_tts[0]['filename'] + ".mp3"
+            await communicate.save(mp3_path)
+            if vail_file(mp3_path):
+                self.convert_to_wav(mp3_path,self.queue_tts[0]['filename'])
+            return
+
+        logger.debug(f'本次EdgeTTS配音：重试延迟:{RETRY_DELAY},出错将重试:{RETRY_NUMS},并发:{MAX_CONCURRENT_TASKS}, 代理:{self.useproxy}')
+
+        self._stop_event.clear()
         all_voices=set()
         for it in self.queue_tts:
-            it['role']=tools.get_edge_rolelist(it['role'],self.language)
+            it['role']=get_edge_rolelist(it['role'],self.language)
             all_voices.add(it['role'])
 
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
         worker_tasks = [
             asyncio.create_task(
                 self._create_audio_with_retry(item, i, total_tasks, semaphore)
@@ -193,7 +215,7 @@ class EdgeTTS(BaseTTS):
                 if app_cfg.exit_soft:
                     return
                 mp3_path = item['filename'] + ".mp3"
-                if tools.vail_file(mp3_path):
+                if vail_file(item['filename']) or  vail_file(mp3_path):
                     ok += 1
                 else:
                     err += 1
@@ -208,7 +230,7 @@ class EdgeTTS(BaseTTS):
                 with ThreadPoolExecutor(max_workers=min(1,len(self.queue_tts),os.cpu_count() or 1)) as pool:
                     for item in self.queue_tts:
                         mp3_path = item['filename'] + ".mp3"
-                        if not tools.vail_file(item['filename']) and tools.vail_file(mp3_path):
+                        if not vail_file(item['filename']) and vail_file(mp3_path):
                             all_task.append(pool.submit(self.convert_to_wav, mp3_path,item['filename']))
                     if len(all_task) > 0:
                         _ = [i.result() for i in all_task]

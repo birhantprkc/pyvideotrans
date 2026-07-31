@@ -13,10 +13,16 @@ TEMP_ROOT = f'{ROOT_DIR}/tmp'
 LOGS_DIR = f'{ROOT_DIR}/logs'
 TEMP_DIR = f'{TEMP_ROOT}/None'
 TRANSLATE_CACHE = f'{TEMP_ROOT}/translate_cache'
+DUBBING_CACHE = f'{TEMP_ROOT}/dubbing_cache'
+
+# 单视频模式时重新进行配音，队列数据文件和停止标识文件
+REDUBB_QUEUE_FILE=f'{TEMP_ROOT}/redubbing.json'
+REDUBB_STATUS_FILE=f'{TEMP_ROOT}/stopredubbing.pid'
 
 Path(f"{ROOT_DIR}/models").mkdir(parents=True, exist_ok=True)
 Path(f"{ROOT_DIR}/logs").mkdir(parents=True, exist_ok=True)
 Path(f"{TRANSLATE_CACHE}").mkdir(parents=True, exist_ok=True)
+Path(f"{DUBBING_CACHE}").mkdir(parents=True, exist_ok=True)
 
 def fix_ssl_cert_env():
     """
@@ -60,10 +66,12 @@ def _set_env():
     os.environ['SOFT_NAME'] = 'pyvideotrans'
     os.environ['MODELSCOPE_CACHE'] = ROOT_DIR + "/models"
     os.environ['HF_HOME'] = ROOT_DIR + "/models"
+    os.environ['PYANNOTE_CACHE'] = ROOT_DIR + "/models"
     os.environ['HF_HUB_CACHE'] = ROOT_DIR + "/models"
     os.environ['HF_TOKEN_PATH'] = ROOT_DIR + "/models/hf_token.txt"
     os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = 'true'
     os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = "3600"
+    os.environ['HF_HUB_ETAG_TIMEOUT'] = "30"
     os.environ["HF_HUB_DISABLE_XET"] = "1"
     os.environ['GRADIO_ANALYTICS_ENABLED'] = '0'
     # 必须在 import requests, modelscope 等库之前执行！

@@ -45,13 +45,13 @@ def _setup_actions_and_menus(ui, MainWindow):
     ui.toolBar.setMinimumSize(QtCore.QSize(0, 0))
     ui.toolBar.setMaximumSize(QtCore.QSize(16777215, 16777215))
     ui.toolBar.setMovable(True)
-    ui.toolBar.setIconSize(QtCore.QSize(100, 40))
+    # ui.toolBar.setIconSize(QtCore.QSize(100, 40))
     ui.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
     ui.toolBar.setFloatable(True)
     ui.toolBar.setObjectName("toolBar")
     ui.toolBar.setStyleSheet("""
     QToolBar QToolButton {
-        min-width: 130px; 
+        min-width: 100px; 
         text-align: center; 
     }
 """)
@@ -93,7 +93,6 @@ def _setup_actions_and_menus(ui, MainWindow):
     _make_action(ui, "actionwhisperx")
     _make_action(ui, "actiondeepgram")
     _make_action(ui, "actionxxl")
-    _make_action(ui, "actioncpp")
     _make_action(ui, "actionzijierecognmodel_api")
     _make_action(ui, "actiontts_gptsovits")
     _make_action(ui, "actiontts_chatterbox")
@@ -176,7 +175,7 @@ def _setup_actions_and_menus(ui, MainWindow):
         ui.actionzijierecognmodel_api, ui.actionopenairecognapi_key,
         ui.actionparakeet_key, ui.actionrecognapi, ui.actionai302_key,
         ui.actionsttapi, ui.actionwhisperx, ui.actiondeepgram,
-        ui.actionxxl, ui.actioncpp,
+        ui.actionxxl,
     ])
 
     _fill_menu(ui.menu, [
@@ -204,7 +203,7 @@ def _setup_actions_and_menus(ui, MainWindow):
     ui.toolBar.addAction(ui.action_biaozhun)
     ui.toolBar.addAction(ui.action_tiquzimu)
     ui.toolBar.addAction(ui.action_yuyinshibie)
-    ui.toolBar.addAction(ui.action_fanyi)
     ui.toolBar.addAction(ui.action_yuyinhecheng)
+    ui.toolBar.addAction(ui.action_fanyi)
     ui.toolBar.addAction(ui.actionsrtmultirole)
     ui.toolBar.addAction(ui.action_yingyinhebing)

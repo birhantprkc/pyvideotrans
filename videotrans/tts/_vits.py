@@ -1,16 +1,22 @@
+import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from videotrans.configure._paths import REDUBB_STATUS_FILE, REDUBB_QUEUE_FILE
+from videotrans.configure.contants import VITS_URL_MS, VITS_URL_HF
 from videotrans.configure.excepts import DubbingSrtError
-from videotrans.configure.config import ROOT_DIR, app_cfg, logger
+from videotrans.configure.config import ROOT_DIR, app_cfg, logger,settings
 from videotrans.tts._base import BaseTTS
-from videotrans.util import tools
 import sherpa_onnx
 import soundfile as sf
+from videotrans.util.help_misc import vail_file, is_connect_hf
+
+# https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/vits.html#id25
+
 
 _model_obj = {}
 
-# https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/vits.html#id25
 
 # 用于多进程
 def _t(role, device='cpu'):
@@ -27,7 +33,7 @@ def _t(role, device='cpu'):
                 ),
                 provider=device,
                 debug=False,
-                num_threads=4,
+                num_threads=int(settings.get('noise_separate_nums', 4)),
             ),
             rule_fsts="",
             max_num_sentences=1,
@@ -43,7 +49,7 @@ def _t(role, device='cpu'):
                 ),
                 provider=device,
                 debug=False,
-                num_threads=4,
+                num_threads=int(settings.get('noise_separate_nums', 4)),
             ),
             rule_fsts=f"{ROOT_DIR}/models/vits/{role}/date.fst,{ROOT_DIR}/models/vits/{role}/number.fst,{ROOT_DIR}/models/vits/{role}/phone.fst",
             max_num_sentences=1,
@@ -59,7 +65,7 @@ def _t(role, device='cpu'):
                 ),
                 provider=device,
                 debug=False,
-                num_threads=4,
+                num_threads=int(settings.get('noise_separate_nums', 4)),
             ),
             rule_fsts=f"{ROOT_DIR}/models/vits/{role}/date.fst,{ROOT_DIR}/models/vits/{role}/number.fst,{ROOT_DIR}/models/vits/{role}/phone.fst,{ROOT_DIR}/models/vits/{role}/new_heteronym.fst",
             max_num_sentences=1,
@@ -75,7 +81,7 @@ def _t(role, device='cpu'):
                 ),
                 provider=device,
                 debug=False,
-                num_threads=4,
+                num_threads=int(settings.get('noise_separate_nums', 4)),
             ),
             rule_fsts="",
             max_num_sentences=1,
@@ -92,7 +98,7 @@ def _t(role, device='cpu'):
                 ),
                 provider=device,
                 debug=False,
-                num_threads=4,
+                num_threads=int(settings.get('noise_separate_nums', 4)),
             ),
             rule_fsts=f"{ROOT_DIR}/models/vits/zh_aishell/date.fst,{ROOT_DIR}/models/vits/zh_aishell/number.fst,{ROOT_DIR}/models/vits/zh_aishell/phone.fst,{ROOT_DIR}/models/vits/zh_aishell/new_heteronym.fst",
             max_num_sentences=1,
@@ -115,8 +121,9 @@ class VitsCNEN(BaseTTS):
 
     def _download(self):
         if not Path(f'{self.local_dir}/zh_en/model.onnx').exists():
-            tools.down_zip(f"{ROOT_DIR}/models",
-                           'https://modelscope.cn/models/himyworld/videotrans/resolve/master/vits-tts.zip',
+            from videotrans.util.help_down import down_zip
+            down_zip(f"{ROOT_DIR}/models",
+                           VITS_URL_MS  if not is_connect_hf() else VITS_URL_HF,
                            self._process_callback)
         return True
 
@@ -124,42 +131,61 @@ class VitsCNEN(BaseTTS):
         _model_obj = {}
         ok, err = 0, 0
         _except = None
-        for item in self.queue_tts:
-            if app_cfg.exit_soft: return
-            try:
-                _key = f'{item["role"]}-{self.device}'
-                if _key in _model_obj:
-                    _tts, sid = _model_obj.get(_key)
-                else:
-                    _tts, sid = _t(item['role'], self.device)
-                    _model_obj[_key] = (_tts, sid)
 
-                audio = _tts.generate(item['text'], sid=sid, speed=self.speed)
-                if len(audio.samples) == 0:
-                    logger.error("Error in generating audios. Please read previous error messages.")
-                    err += 1
-                    continue
-                sf.write(
-                    item['filename'] + "-24k.wav",
-                    audio.samples,
-                    samplerate=audio.sample_rate,
-                    subtype="PCM_16",
-                )
-                if not tools.vail_file(item['filename'] + '-24k.wav'):
-                    err += 1
-                    continue
-                ok += 1
-                self.convert_to_wav(item['filename'] + '-24k.wav', item['filename'])
-                self.signal(text=f"Dubbing {ok}")
-            except Exception as e:
-                _except = e
-                logger.exception(f'vits dubbing error:{e}', exc_info=True)
-                err += 1
+        queue_tts=self.queue_tts
+        # 循环，用于轮询重新配音数据，非重新配音时，第一轮直接返回
+        while 1:
+            if self.is_redubb and Path(REDUBB_STATUS_FILE).exists():
+                return True
+            if self.is_redubb:
+                try:
+                    queue_tts=json.loads(Path(REDUBB_QUEUE_FILE).read_text(encoding='utf-8'))
+                except (OSError,json.JSONDecodeError) as e:
+                    logger.exception(f'supertonic-3: {e}',exc_info=True)
+                    raise
 
-        try:
-            del _model_obj
-        except Exception:
-            pass
+
+            for i,item in enumerate(queue_tts):
+                if app_cfg.exit_soft or (self.is_redubb and Path(REDUBB_STATUS_FILE).exists()):
+                    return
+                if vail_file(item['filename']):
+                    ok+=1
+                    continue
+                try:
+                    _key = f'{item["role"]}-{self.device}'
+                    if _key in _model_obj:
+                        _tts, sid = _model_obj.get(_key)
+                    else:
+                        _tts, sid = _t(item['role'], self.device)
+                        _model_obj[_key] = (_tts, sid)
+
+                    audio = _tts.generate(item['text'], sid=sid, speed=self.speed)
+                    if len(audio.samples) == 0:
+                        logger.error("Error in generating audios. Please read previous error messages.")
+                        err += 1
+                        continue
+                    sf.write(
+                        item['filename'] + "-24k.wav",
+                        audio.samples,
+                        samplerate=audio.sample_rate,
+                        subtype="PCM_16",
+                    )
+                    if not vail_file(item['filename'] + '-24k.wav'):
+                        err += 1
+                        continue
+                    ok += 1
+                    self.convert_to_wav(item['filename'] + '-24k.wav', item['filename'])
+                    self.signal(text=f"Dubbing {ok}")
+                except Exception as e:
+                    _except = e
+                    logger.exception(f'vits dubbing error:{e}', exc_info=True)
+                    err += 1
+
+            if self.is_redubb:
+                time.sleep(0.5)
+                continue
+            break
+
         if ok == 0:
             raise _except if _except else DubbingSrtError('vits dubbing error')
 

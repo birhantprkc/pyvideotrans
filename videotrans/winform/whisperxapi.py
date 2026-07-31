@@ -1,6 +1,5 @@
 def openwin():
     from videotrans.configure.config import tr,app_cfg,params
-    from videotrans.util import tools
     from videotrans import recognition
     from videotrans.util.TestSTT import TestSTT
     from videotrans.winform._helpers import make_feed_stt
@@ -28,7 +27,7 @@ def openwin():
         params.save()
         winobj.close()
 
-    winobj.api_url.setText(params.get("whisperx_api", ''))
+    winobj.api_url.setText(str(params.get("whisperx_api", '')))
     winobj.set.clicked.connect(save)
     winobj.test.clicked.connect(test)
     winobj.show()

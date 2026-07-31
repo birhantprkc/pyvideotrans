@@ -1,7 +1,9 @@
+
+
 def openwin():
+    from videotrans.util.help_misc import set_process, show_error
     from videotrans.configure.config import tr,app_cfg,settings,params
     from videotrans.configure import config
-    from videotrans.util import tools
     from videotrans.util.ListenVoice import ListenVoice
     from videotrans.component.set_form import ChatttsForm
 
@@ -13,7 +15,7 @@ def openwin():
             from PySide6 import QtWidgets
             QtWidgets.QMessageBox.information(winobj, "ok", "Test Ok")
         else:
-            tools.show_error(d)
+            show_error(d)
         winobj.test.setText(tr("Test"))
 
     def _fix_url(url):
@@ -37,10 +39,10 @@ def openwin():
         params.save()
         settings['chattts_voice'] = winobj.chattts_voice.text().strip()
         settings.save()
-        tools.set_process(text='', type="refreshtts")
+        set_process(text='', type="refreshtts")
         winobj.close()
 
-    winobj.chattts_address.setText(params.get("chattts_api",''))
+    winobj.chattts_address.setText(str(params.get("chattts_api",'')))
     winobj.chattts_voice.setText(str(settings.get("chattts_voice",'')))
     winobj.set_chattts.clicked.connect(save)
     winobj.test.clicked.connect(test)
