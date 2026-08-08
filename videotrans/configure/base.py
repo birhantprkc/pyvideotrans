@@ -8,6 +8,21 @@ from pathlib import Path
 from typing import Optional
 from videotrans.configure.config import tr, settings, app_cfg, logger, push_queue, TEMP_ROOT
 from videotrans.util.help_misc import set_proxy,vail_file
+import sys
+# --- 修复 NoneType object has no attribute 'isatty' 开始 ---
+class NullWriter:
+    def write(self, *args, **kwargs): pass
+    def flush(self, *args, **kwargs): pass
+    def isatty(self): return False
+
+if sys.stdout is None:
+    sys.stdout = NullWriter()
+if sys.stderr is None:
+    sys.stderr = NullWriter()
+if sys.stdin is None:
+    sys.stdin = NullWriter()
+
+
 
 @dataclass
 class BaseCon:
@@ -171,7 +186,7 @@ class BaseCon:
             if status_dict and status_dict['is_end']:
                 return
             timeout += 1
-            if timeout > 3600:
+            if timeout > 7200:
                 logger.warning(f'新进程已执行3600s仍未终止，可能已出错: {logs_file}')
                 return
             _p = Path(logs_file)
