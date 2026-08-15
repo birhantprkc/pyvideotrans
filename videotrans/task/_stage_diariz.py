@@ -13,12 +13,13 @@ class DiarizMixin:
 
     def diariz(self):
         _st=time.time()
-        if self._exit() or not self.do_diarize or not self.cfg.enable_diariz or self.max_speakers == 1 or Path(
+        # 只要 do_diarize 是 False,无论是否选中都不分离说话人
+        if self._exit() or not self.should_dubbing or not self.do_diarize or not self.cfg.enable_diariz or self.max_speakers == 1 or Path(
                 self.cfg.cache_folder + "/speaker.json").exists():
             return
         speaker_type = settings.get('speaker_type', 'built')
         hf_token = settings.get('hf_token')
-        if speaker_type == 'built' and self.cfg.detect_language[:2] not in ['zh', 'en']:
+        if speaker_type == 'built' and self.cfg.detect_language.split('-')[0] not in ['zh', 'en']:
             logger.error(f'当前选择 built 说话人分离模型，但不支持当前语言:{self.cfg.detect_language}')
             return
         if speaker_type in ['pyannote', 'reverb'] and not hf_token:

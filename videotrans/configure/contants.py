@@ -1,6 +1,6 @@
 #-------------标点 空格语言-----------
 # 中日韩 泰国语 高棉语 粤语 不使用空格
-CJK_LANG = ["zh", "ja", "ko", "yu", "th", "km", "yue"]
+CJK_LANG = ["zh", "ja", "ko","th", "km", "yue"]
 # 常见标点
 PUNC_FLAGS = [",", ".", "?", "!", ";", "，", "。", "？", "；", "！"]
 # 逗号等软性标点
@@ -112,7 +112,7 @@ GEMINI_TTS_MODELS = "gemini-3.1-flash-tts-preview,gemini-2.5-flash-preview-tts,g
 
 Whisper_cpp_models = "ggml-tiny.bin,ggml-base.bin,ggml-small.bin,ggml-medium.bin,ggml-large-v1.bin,ggml-large-v2.bin,ggml-large-v3.bin,ggml-large-v3-turbo.bin"
 Whisper_net_models = Whisper_cpp_models
-Qwenmt_Model = "qwen-mt-turbo,qwen-mt-plus,qwen-mt-flash,qwen-mt-lite,qwen3.7-max,qwen3.7-plus,qwen3.6-flash,qwen3.6-plus,qwen3-asr-flash,qwen3-asr-flash-filetrans"
+Qwenmt_Model = "qwen-mt-turbo,qwen-mt-plus,qwen-mt-flash,qwen-mt-lite,qwen3.7-max,qwen3.7-plus,qwen3.6-flash,qwen3.6-plus,qwen3-asr-flash"
 Qwentts_Models = 'qwen3-tts-flash,qwen3-tts-instruct-flash,qwen-tts-latest,qwen-tts'
 Qpenaitts_Model = "tts-1,tts-1-hd,gpt-4o-mini-tts"
 
@@ -227,11 +227,6 @@ ING_STATUS = "ing"
 #------------配音试听词---------------
 LISTEN_TEXT = {
     "zh": "你好啊，我亲爱的朋友，希望你的每一天都是美好愉快的！",
-    "zh-cn": "你好啊，我亲爱的朋友，希望你的每一天都是美好愉快的！",
-    "zh-tw": "你好啊，我親愛的朋友，希望你的每一天都是美好愉快的！",
-    "ro": "Bună, draga mea prietenă, sper ca fiecare zi a ta să fie minunată și plină de bucurie!",
-    "km": "សួស្តីមិត្តជាទីស្រឡាញ់របស់ខ្ញុំ ខ្ញុំសង្ឃឹមថារាល់ថ្ងៃរបស់អ្នកគឺអស្ចារ្យ និងរីករាយ។!",
-    "nb": "Hallo, min kjære venn, jeg håper hver dag din er fantastisk og gledelig.",
     "en": "Hello, my dear friend. I hope your every day is beautiful and enjoyable!",
     "fr": "Bonjour mon cher ami. J'espère que votre quotidien est beau et agréable !",
     "de": "Hallo mein lieber Freund. Ich hoffe, dass Ihr Tag schön und angenehm ist!",
@@ -262,5 +257,8 @@ LISTEN_TEXT = {
     "fa": "سلام دوستای گلم امیدوارم هر روز از زندگیتون عالی و شاد باشه.",
     "ur": "ہیلو پیارے دوست، مجھے امید ہے کہ آپ آج خوش ہوں گے۔",
     "yue": "你好啊親愛嘅朋友，希望你今日好開心",
+    "ro": "Bună, draga mea prietenă, sper ca fiecare zi a ta să fie minunată și plină de bucurie!",
+    "km": "សួស្តីមិត្តជាទីស្រឡាញ់របស់ខ្ញុំ ខ្ញុំសង្ឃឹមថារាល់ថ្ងៃរបស់អ្នកគឺអស្ចារ្យ និងរីករាយ។!",
+    "nb": "Hallo, min kjære venn, jeg håper hver dag din er fantastisk og gledelig.",
 
 }
