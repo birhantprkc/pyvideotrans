@@ -55,6 +55,8 @@ def faster_whisper(
             )
             return model
         except Exception as e:
+            if 'Unable to open file' in str(e) or _compute_type == 'float32':
+                raise
             # 对数据类型问题引发的错误重试
             # cuda下先尝试使用 float16
             if is_cuda and _compute_type != 'float16':
@@ -192,7 +194,7 @@ def faster_whisper(
             logger.debug(f'faster-whisper模式下，对{model_name}模型返回的字级时间戳进行断句')
             if not texts:
                 logger.error(f'no texts:{info=}\n{segments=}')
-                return False, f"No transcription results returned. Please check the original audio/video or model and try again.\n{info=}"
+                return False, f"No transcription results returned. Please check the original audio/video [{info.duration_after_vad=}s].\n{info=}"
             raws = _resegment(texts, info.language, max_speech_ms, logs_file)
             if jianfan and raws:
                 for it in raws:
