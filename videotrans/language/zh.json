@@ -301,7 +301,7 @@
     "Select a watermark image": "选择水印图片",
     "Select an Image": "选择水印图",
     "Select an audio": "选择第二个音频文件",
-    "Select audio & video": "选择音频或视频",
+    "Select audio & video": "选择视频或音频",
     "Select faster-whisper-xxl.exe": "选择 faster-whisper-xxl.exe",
     "Select file": "选择音视频文件",
     "Select files to be converted/multiple selections possible": "选择要转换的字幕/可多选",
@@ -505,6 +505,7 @@
     "must select audio or video file": "必须选择音视频文件",
     "mustberole": "必须选择一个配音角色",
     "nextstep": "保存修改并继续下一步",
+    "continnextstep": "继续下一步",
     "nocuda": "你的设备不满足CUDA加速要求，请确认是NVIDIA显卡，并已配置好CUDA环境，点击菜单栏-帮助支持-CUDA help",
     "nocudnn": "你的设备没有安装配置cuDNN，请安装然后重启软件，或者取消CUDA加速",
     "nosubtitle": "不嵌入字幕",
@@ -923,5 +924,8 @@
 	"Import SRT(only effective for single-video)":"导入发音语言SRT(仅单视频翻译有效)",
 	"For instructions on importing local SRT files during batch translation":"批量翻译时导入本地SRT文件方法，请查看[https://pyvideotrans.com/localsrt]",
 	"higgs-audio-v3-tips":"CUDA加速8位量化后显存需10G+；纯CPU运行内存需20G+",
-	"Standardized dubbing segment processing":"标准化配音片段处理中..."
+	"Standardized dubbing segment processing":"标准化配音片段处理中...",
+    "Initial prompt for the Whisper model for speech": "发音语言为 {} 时发送给whisper模型的提示词",
+    "The subtitle line does not specify a voice actor": "第 {} 行字幕未指定配音角色，并且未设置默认角色，请检查！",
+	"none_effort":"default=不设置参数，跟随远端模型默认\nnone=禁止思考"
 }

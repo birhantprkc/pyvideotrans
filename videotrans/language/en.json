@@ -4,6 +4,7 @@
     "&Setting": "Translation Settings (&S)",
     "&TTSsetting": "TTS Settings (&E)",
     "&Tools": "Tools / Options (&T)",
+	"continnextstep":"Continue Next",
     "302.AI API KEY": "302.AI API Key",
     "A default role must be selected": "A default role must be selected",
     "AIs compatible with the ChatGPT Local LLM also used here": "OpenAI-compatible local LLMs (e.g., Ollama; API URL usually ends with /v1)",
@@ -920,5 +921,8 @@
 	"Import SRT(only effective for single-video)":"Import origin SRT(only effective single-video)",
 	"For instructions on importing local SRT files during batch translation":"For instructions on importing local SRT files during batch translation, please refer to [https://pyvideotrans.com/localsrt].",
 	"higgs-audio-v3-tips":"CUDA acceleration 8-bit quantization requires 10GB of gpu memory; pure CPU operation requires more than 20GB of RAM.",
-	"Standardized dubbing segment processing":"Standardized dubbing segment processing..."
+	"Standardized dubbing segment processing":"Standardized dubbing segment processing...",
+    "Initial prompt for the Whisper model for speech": "Initial prompt for the Whisper model for {} speech",
+    "The subtitle line does not specify a voice actor": "The subtitle line {} does not specify a voice actor and no default character has been set. Please check!",
+	"none_effort":"default=No parameters set, follow the default settings of the remote model\nnone=Disable thinking"
 }
