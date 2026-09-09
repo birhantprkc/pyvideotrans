@@ -9,11 +9,12 @@ from openai import OpenAI, LengthFinishReasonError,NotFoundError, Authentication
 from tenacity import before_log, retry_if_not_exception_type, wait_fixed, stop_after_attempt, after_log, retry
 
 from videotrans.configure.excepts import NO_RETRY_EXCEPT, TranslateSrtError, LLMSegmentError, StopTask
-from videotrans.configure.config import logger, settings, params, ROOT_DIR, tr
+from videotrans.configure.config import logger, settings, ROOT_DIR, tr
+
 from videotrans.task.taskcfg import SrtItem
 from videotrans.translator._base import BaseTrans
 from videotrans.util._srt_parse import get_subtitle_from_srt, ms_to_time_string
-from videotrans.util.help_misc import get_prompt, get_tanslate_type
+from videotrans.util.help_misc import  get_tanslate_type
 
 
 @dataclass
@@ -21,7 +22,6 @@ class OpenAICampat(BaseTrans):
     ainame:str=None
     prompt: str = field(init=False)
     api_key: str = field(init=False)
-    api_url: str = field(init=False)
     temperature:float=1.0
     max_tokens:int=8192
     reasoning_effort:str=None
@@ -30,11 +30,8 @@ class OpenAICampat(BaseTrans):
     def __post_init__(self):
         super().__post_init__()
         self.temperature=float(settings.get('aitrans_temperature', 1.0))
-        lang_prompt=''
-        lang_prompt_file=f'{ROOT_DIR}/videotrans/prompts/language_prompts/{self.target_language_name}.txt'
-        if Path(lang_prompt_file).exists():
-            lang_prompt=Path(lang_prompt_file).read_text(encoding='utf-8')
-        self.prompt = get_prompt(ainame=self.ainame,aisendsrt=self.aisendsrt).replace('{lang}',self.target_language_name).replace('{lang_prompt}',lang_prompt)
+        self.prompt=self._set_context()
+        logger.debug(f'{self.ainame=},{self.source_code=},{self.target_code=},{self.target_language_name=},{self.aisendsrt=}')
 
         try:
             self.max_tokens=int(self.max_tokens)
@@ -85,6 +82,7 @@ class OpenAICampat(BaseTrans):
             
         logger.debug(f'字幕翻译:{self.ainame=},{kwargs=},{self.extra_body=}')
         kwargs["messages"]=message
+
         
         try:
             response = self._create_completion(kwargs)
@@ -121,13 +119,6 @@ class OpenAICampat(BaseTrans):
         prompts_template = Path(f'{ROOT_DIR}/videotrans/prompts/resegment/llm.txt').read_text(encoding='utf-8')
         chunk_size = int(settings.get('llm_chunk_size', 20))
 
-
-
-        # reasoning_effort='high' if self.ainame=='deepseek' else None
-        #
-        # if reasoning_effort is None:
-        #     _reason=params.get('chatgpt_reasoning_effort')
-        #     reasoning_effort=None if not _reason or _reason=='default' else _reason
         
         kwargs={
                 "model":self.model_name,

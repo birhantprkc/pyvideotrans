@@ -1,4 +1,4 @@
-from ._languages_dict import LISTEN_TEXT,_LANGUAGE_M2M100,_LANGUAGE_FIRERED3,LANG_CODE,EDGE_LANGUANGES_CODE,EDGET_LANGUAGES_NAME2CODE,EDGET_LANGUAGES_NAME2CODE_EN
+from ._languages_dict import LISTEN_TEXT,_LANGUAGE_M2M100,_LANGUAGE_FIRERED3,LANG_CODE,EDGE_LANGUANGES_CODE,EDGET_LANGUAGES_NAME2CODE,EDGET_LANGUAGES_NAME2CODE_EN,SUBTITLE_CODE,SUBTITLE_CODE_B
 #-------------标点 空格语言-----------
 # 中日韩 泰国语 高棉语 粤语 不使用空格
 CJK_LANG = ["zh", "ja", "ko","th", "km", "yue","lo","lao"]
@@ -113,7 +113,7 @@ GEMINITTS_ROLES = "Zephyr,Puck,Charon,Kore,Fenrir,Leda,Orus,Aoede,Callirrhoe,Aut
 
 GEMINI_TTS_MODELS = "gemini-3.1-flash-tts-preview,gemini-2.5-flash-preview-tts,gemini-2.5-pro-preview-tts"
 
-GEMINI_ASR_MODELS="gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest"
+GEMINI_ASR_MODELS="gemini-3.5-transcribe"
 
 Whisper_cpp_models = "ggml-tiny.bin,ggml-base.bin,ggml-small.bin,ggml-medium.bin,ggml-large-v1.bin,ggml-large-v2.bin,ggml-large-v3.bin,ggml-large-v3-turbo.bin"
 Whisper_net_models = Whisper_cpp_models
@@ -231,6 +231,26 @@ WHISPERCPP_MODEL_URL_MS='https://modelscope.cn/models/viggocx/whisper.cpp/resolv
 INSTALL_RUBBERBAND_TIPS = """Windows: For Windows systems, please download the file, extract it, and place it in the ffmpeg folder in the current directory. Use a better audio acceleration algorithm\nhttps://breakfastquay.com/files/releases/rubberband-4.0.0-gpl-executable-windows.zip
 Darwin: `brew install rubberband`  and  `uv add pyrubberband` Use a better audio acceleration algorithm
 Linux: `sudo apt install rubberband-cli libsndfile1-dev` and `uv add pyrubberband`  Use a better audio acceleration algorithm"""
+
+
+CONTEXT_INFO_PROMPT="""
+# GLOBAL CONTEXT REFERENCE (STRICTLY READ-ONLY)
+
+Below inside `<GLOBAL_REFERENCE_CONTEXT>` is the **complete, full-length original transcript** of the entire video.
+
+### CRITICAL RULES FOR USING THIS REFERENCE:
+1. **READ-ONLY BACKGROUND CONTEXT ONLY**:
+   - This full script is provided EXCLUSIVELY to help you understand the broader story, resolve ambiguous pronouns (e.g., who "he/she/it" refers to), infer speaker tone, and see complete sentences that may have been cut off at chunk boundaries.
+2. **DO NOT TRANSLATE OR REPRODUCE THIS REFERENCE**:
+   - **STRICT PROHIBITION**: Do NOT translate, quote, summarize, or reproduce any part of `<GLOBAL_REFERENCE_CONTEXT>`.
+   - Outputting any block from outside the `<INPUT>` section is a critical system failure.
+3. **YOUR EXCLUSIVE TRANSLATION TARGET IS `<INPUT>`**:
+   - You must ONLY translate and output the subset of subtitle blocks provided inside `<INPUT>`.
+   - Your final output count, index numbers, and timestamps must match `<INPUT>` and `<INPUT>` ALONE.
+
+
+"""
+
 
 #--------进度状态提示文字-----------------------
 END_STATUS = "end"
