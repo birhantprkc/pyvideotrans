@@ -91,7 +91,7 @@ FASTER_MODELS_DICT = {
 }
 # funasr模型
 FUNASR_MODEL = ['Fun-ASR-Nano-2512', 'Fun-ASR-MLT-Nano-2512', 'paraformer-zh', 'SenseVoiceSmall']
-QWENASR_LOCAL=['1.7B', '0.6B','CN_Dialect']
+QWENASR_LOCAL=['1.7B', '0.6B']
 
 # deepgram 支持的语音识别模型
 DEEPGRAM_MODEL = [
@@ -135,7 +135,7 @@ Azure_Model = "gpt-5.5,gpt-5.4-mini, gpt-5.4-nano, gpt-5.4, gpt-5.4-pro,gpt-5.1,
 Localllm_Model = "qwen3.6,deepseek-v4-flash"
 Zhipuai_Model = "glm-5.3,glm-5.2,glm-5.1,glm-5, glm-4.7, glm-4.7-flash, glm-4.6,glm-4.5-flash"
 
-Deepseek_Model = "deepseek-v4-pro,deepseek-v4-flash"
+Deepseek_Model = "deepseek-flash,deepseek-v4-pro,deepseek-v4-flash"
 Openrouter_Model = "z-ai/glm-5.3,qwen/qwen3.8-27b,google/gemini-3.7-flash,deepseek/deepseek-v4-flash-vision-exp"
 # LiteLLM proxy model aliases are defined by the user's own proxy config; these
 # are only convenience defaults for the dropdown and can be edited freely.
@@ -226,6 +226,12 @@ REALTIME_URL_HF='https://huggingface.co/mortimerme/repocollect/resolve/main/real
 # whisper.cpp 模型下载地址
 WHISPERCPP_MODEL_URL_HF='https://huggingface.co/ggerganov/whisper.cpp/resolve/main/{}?download=true'
 WHISPERCPP_MODEL_URL_MS='https://modelscope.cn/models/viggocx/whisper.cpp/resolve/master/{}'
+
+
+# spacy_ontonotes.zip
+SPACY_URL_MS='https://modelscope.cn/models/himyworld/videotrans/resolve/master/spacy_ontonotes.zip'
+SPACY_URL_HF='https://github.com/explosion/spacy-pkuseg/releases/download/v0.0.26/spacy_ontonotes.zip'
+
 
 #----------Rubberband 库安装提示------------------
 INSTALL_RUBBERBAND_TIPS = """Windows: For Windows systems, please download the file, extract it, and place it in the ffmpeg folder in the current directory. Use a better audio acceleration algorithm\nhttps://breakfastquay.com/files/releases/rubberband-4.0.0-gpl-executable-windows.zip
